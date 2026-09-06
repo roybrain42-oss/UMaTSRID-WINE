@@ -1,0 +1,97 @@
+{
+  "entities": {
+    "UserProfile": {
+      "collection": "users",
+      "fields": {
+        "id": { "type": "string", "description": "Unique user identifier" },
+        "name": { "type": "string", "description": "Full name of the user" },
+        "email": { "type": "string", "description": "Email address" },
+        "phone": { "type": "string", "description": "Phone number / WhatsApp" },
+        "role": { "type": "string", "description": "Role: CITIZEN, AGENT, RECYCLER, or ADMIN" },
+        "entityType": { "type": "string", "description": "INDIVIDUAL, SCHOOL, COMMUNITY, or ORGANIZATION" },
+        "institutionName": { "type": "string", "description": "Name of school or organization if applicable" },
+        "location": { "type": "string", "description": "City or locality" },
+        "community": { "type": "string", "description": "Neighborhood / District in Ghana" },
+        "ecoPoints": { "type": "number", "description": "Current active EcoPoints balance" },
+        "totalWasteKg": { "type": "number", "description": "Total kilograms of recyclables diverted" },
+        "co2SavedKg": { "type": "number", "description": "Total kilograms of CO2 avoided" },
+        "verifiedCollections": { "type": "number", "description": "Total number of verified collections" },
+        "momoNumber": { "type": "string", "description": "Registered MTN/Telecel/AT MoMo phone number" },
+        "momoNetwork": { "type": "string", "description": "MTN, TELECEL, or AT" },
+        "avatar": { "type": "string", "description": "Avatar image URL" },
+        "biometricEnrolled": { "type": "boolean", "description": "Whether WebAuthn passkey is enrolled" },
+        "createdAt": { "type": "string", "description": "Account registration timestamp" },
+        "lastActiveAt": { "type": "string", "description": "Last activity timestamp" }
+      },
+      "rules": "Users can read and write their own profile; admins can read and manage all profiles."
+    },
+    "WasteSubmission": {
+      "collection": "submissions",
+      "fields": {
+        "id": { "type": "string", "description": "Submission ID" },
+        "userId": { "type": "string", "description": "User ID who submitted" },
+        "userName": { "type": "string", "description": "User name" },
+        "category": { "type": "string", "description": "Waste category (PLASTIC, METAL, PAPER, GLASS, ORGANIC, EWASTE)" },
+        "wasteType": { "type": "string", "description": "Detailed material description" },
+        "weightKg": { "type": "number", "description": "Reported weight in kilograms" },
+        "location": { "type": "string", "description": "Pickup or drop-off location description" },
+        "collectionType": { "type": "string", "description": "PICKUP or DROP_OFF" },
+        "photoUrl": { "type": "string", "description": "Waste verification photo URL" },
+        "status": { "type": "string", "description": "PENDING, VERIFIED, REJECTED, or COMPLETED" },
+        "pointsAwarded": { "type": "number", "description": "EcoPoints awarded" },
+        "cashEquivalentGhs": { "type": "number", "description": "MoMo cash equivalent value in Ghana Cedis" },
+        "notes": { "type": "string", "description": "Special sorting or handling notes" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" }
+      },
+      "rules": "Citizens can create and read their submissions; collectors/admins can read and verify submissions."
+    },
+    "CollectionJob": {
+      "collection": "collection_jobs",
+      "fields": {
+        "id": { "type": "string", "description": "Job ID" },
+        "submissionId": { "type": "string", "description": "Linked submission ID" },
+        "citizenName": { "type": "string", "description": "Citizen full name" },
+        "citizenPhone": { "type": "string", "description": "Citizen contact phone" },
+        "location": { "type": "string", "description": "Pickup GPS/location" },
+        "wasteType": { "type": "string", "description": "Waste category or material" },
+        "estimatedKg": { "type": "number", "description": "Estimated weight in kg" },
+        "actualKg": { "type": "number", "description": "Verified actual weight in kg" },
+        "status": { "type": "string", "description": "AVAILABLE, ASSIGNED, IN_TRANSIT, COMPLETED, or CANCELLED" },
+        "collectorId": { "type": "string", "description": "Assigned collector agent ID" },
+        "collectorName": { "type": "string", "description": "Assigned collector name" },
+        "scheduledTime": { "type": "string", "description": "Scheduled pickup time" },
+        "completedAt": { "type": "string", "description": "Completion timestamp" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" }
+      },
+      "rules": "Collectors and admins can view and update collection jobs; citizens can track their own jobs."
+    },
+    "PointTransaction": {
+      "collection": "point_transactions",
+      "fields": {
+        "id": { "type": "string", "description": "Transaction ID" },
+        "userId": { "type": "string", "description": "Target user ID" },
+        "amount": { "type": "number", "description": "Points credited (+) or debited (-)" },
+        "type": { "type": "string", "description": "EARNED, REDEEMED, WITHDRAWAL, or BONUS" },
+        "source": { "type": "string", "description": "SUBMISSION, MARKETPLACE, MOMO_CASHOUT, or BOT_SORTING" },
+        "description": { "type": "string", "description": "Transaction details" },
+        "timestamp": { "type": "string", "description": "Timestamp string" }
+      },
+      "rules": "Users can read their own transaction history."
+    },
+    "CashWithdrawal": {
+      "collection": "cash_withdrawals",
+      "fields": {
+        "id": { "type": "string", "description": "Withdrawal request ID" },
+        "userId": { "type": "string", "description": "User ID requesting cashout" },
+        "amountGhs": { "type": "number", "description": "Amount in Ghana Cedis (GH₵)" },
+        "ecoPointsDeducted": { "type": "number", "description": "EcoPoints deducted from balance" },
+        "momoNumber": { "type": "string", "description": "Mobile Money phone number" },
+        "momoNetwork": { "type": "string", "description": "MTN, TELECEL, or AT" },
+        "status": { "type": "string", "description": "PENDING, APPROVED, or COMPLETED" },
+        "referenceId": { "type": "string", "description": "Bank / MoMo gateway payout reference" },
+        "requestedAt": { "type": "string", "description": "Request timestamp" }
+      },
+      "rules": "Users can view and request their own withdrawals; admins can approve and settle."
+    }
+  }
+}

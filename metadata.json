@@ -1,0 +1,6 @@
+{
+  "name": "EcoSort",
+  "description": "AI-Powered Waste Collection, Virtual Sorting & Reward Platform. Recycle Today. Earn Tomorrow. Build a Cleaner Ghana.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

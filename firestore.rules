@@ -1,0 +1,77 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // User Profiles
+    match /users/{userId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isAuthenticated() && isOwner(userId);
+    }
+
+    // Waste Submissions
+    match /submissions/{submissionId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isAuthenticated();
+    }
+
+    // Collection Jobs for Fleet & Citizens
+    match /collection_jobs/{jobId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isAuthenticated();
+    }
+
+    // Points & Financial Ledger
+    match /point_transactions/{txId} {
+      allow read: if true;
+      allow create, update: if true;
+    }
+
+    // Cash / MoMo Withdrawals
+    match /cash_withdrawals/{withdrawalId} {
+      allow read: if true;
+      allow create, update: if true;
+    }
+
+    // Reward Rules & EPA Rates
+    match /reward_rules/{ruleId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Reward Redemptions
+    match /reward_redemptions/{redemptionId} {
+      allow read: if true;
+      allow create, update: if true;
+    }
+
+    // Robot Telemetry Events
+    match /robot_events/{eventId} {
+      allow read: if true;
+      allow create: if true;
+    }
+
+    // Recycler Procurement Orders
+    match /recycler_orders/{orderId} {
+      allow read: if true;
+      allow create, update: if true;
+    }
+
+    // System Settings & Announcements
+    match /system_settings/{settingId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}

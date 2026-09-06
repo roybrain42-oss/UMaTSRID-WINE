@@ -1,0 +1,21 @@
+{
+  "name": "EcoSort",
+  "short_name": "EcoSort",
+  "description": "Recycle Today. Earn Tomorrow. AI-powered waste sorting, collector logistics, and instant Mobile Money payouts in Ghana.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#0F172A",
+  "theme_color": "#0F172A",
+  "orientation": "portrait-primary",
+  "lang": "en-GH",
+  "categories": ["utilities", "productivity", "finance", "lifestyle"],
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
