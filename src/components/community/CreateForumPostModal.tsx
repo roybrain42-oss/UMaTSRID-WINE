@@ -44,6 +44,7 @@ export const CreateForumPostModal: React.FC<CreateForumPostModalProps> = ({ isOp
       authorName: currentUser.name,
       authorAvatar: currentUser.avatar,
       authorRole: currentUser.role,
+      authorBadge: 'Eco Citizen',
       authorLocation: currentUser.location || 'Accra, Ghana',
       tags: tags.length > 0 ? tags : ['EcoSort', 'Ghana'],
       isPinned: false

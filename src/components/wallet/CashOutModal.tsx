@@ -179,6 +179,9 @@ export const CashOutModal: React.FC = () => {
       const bioResult = await openBiometricPrompt({
         actionType: 'MOMO_WITHDRAWAL',
         amountGhs: netPayoutGhs,
+        recipientPhone,
+        network,
+        accountHolderName,
         recipient: `${network} ${recipientPhone} (${accountHolderName})`,
         title: `Authorize MoMo Cash-Out (GH₵ ${netPayoutGhs.toFixed(2)})`,
         subtitle: `Scan ${isFace ? 'Face ID' : 'Fingerprint'} to confirm instant transfer to ${recipientPhone}`

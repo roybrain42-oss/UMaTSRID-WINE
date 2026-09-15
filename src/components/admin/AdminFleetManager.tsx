@@ -140,20 +140,20 @@ export const AdminFleetManager: React.FC = () => {
               <div className="bg-slate-50 dark:bg-slate-950 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs space-y-2">
                 <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
                   <MapPin className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                  <span>{job.pickupAddress}</span>
+                  <span>{job.location}</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200 dark:border-slate-800 text-[11px]">
                   <div>
                     <span className="text-slate-400 font-bold block">Material Category</span>
                     <span className="font-bold text-slate-900 dark:text-white">
-                      {job.category} • {job.material}
+                      {job.wasteCategory} • {job.material}
                     </span>
                   </div>
                   <div>
                     <span className="text-slate-400 font-bold block">Estimated Weight</span>
                     <span className="font-bold text-slate-900 dark:text-white font-mono">
-                      {job.estimatedWeightKg} kg (~{job.estimatedPoints} Pts)
+                      {job.estimatedWeightKg} kg (~{Math.round(job.estimatedWeightKg * 20)} Pts)
                     </span>
                   </div>
                 </div>
@@ -161,7 +161,7 @@ export const AdminFleetManager: React.FC = () => {
                 {job.actualWeightKg && (
                   <div className="p-2 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800 flex items-center justify-between text-xs">
                     <span className="font-bold text-emerald-700 dark:text-emerald-300">Verified Scale Weight:</span>
-                    <span className="font-black text-emerald-600 font-mono">{job.actualWeightKg} kg ({job.pointsEarned || 0} Pts)</span>
+                    <span className="font-black text-emerald-600 font-mono">{job.actualWeightKg} kg ({Math.round(job.actualWeightKg * 20)} Pts)</span>
                   </div>
                 )}
 
@@ -231,7 +231,7 @@ export const AdminFleetManager: React.FC = () => {
             </div>
 
             <p className="text-xs text-slate-500">
-              Assign Job #{assigningJob.id} ({assigningJob.category}, {assigningJob.community}) to a certified field agent.
+              Assign Job #{assigningJob.id} ({assigningJob.wasteCategory}, {assigningJob.community}) to a certified field agent.
             </p>
 
             <form onSubmit={handleAssignSubmit} className="space-y-4">

@@ -11,6 +11,8 @@ const PRECACHE_ASSETS = [
   '/index.html',
   '/manifest.json',
   '/manifest.webmanifest',
+  '/logo.png',
+  '/favicon.png',
   '/favicon.ico'
 ];
 

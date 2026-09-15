@@ -82,10 +82,10 @@ export const AdminUserManagement: React.FC = () => {
   const handleImpersonate = (user: UserProfile) => {
     setCurrentUser(user);
     if (user.role === 'USER') setCurrentView('user-dashboard');
-    else if (user.role === 'COLLECTION_AGENT') setCurrentView('collector-jobs');
-    else if (user.role === 'RECYCLER') setCurrentView('recycler-portal');
-    else if (user.role === 'COMMUNITY_ADMIN') setCurrentView('community-hub');
-    else setCurrentView('admin-dashboard');
+    else if (user.role === 'COLLECTION_AGENT') setCurrentView('collector-app');
+    else if (user.role === 'RECYCLER') setCurrentView('recycler');
+    else if (user.role === 'COMMUNITY_ADMIN') setCurrentView('community');
+    else setCurrentView('admin');
   };
 
   const exportUsersCSV = () => {

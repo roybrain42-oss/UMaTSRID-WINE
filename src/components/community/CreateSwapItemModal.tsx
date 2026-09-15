@@ -49,22 +49,29 @@ export const CreateSwapItemModal: React.FC<CreateSwapItemModalProps> = ({ isOpen
     e.preventDefault();
     if (!title.trim()) return;
 
+    const img = customImageInput.trim() || imageUrl;
     addSwapItem({
       title: title.trim(),
       description: description.trim() || 'Pre-loved or upcycled item available for circular trade in Ghana.',
       category,
       condition,
       tradeType,
+      pointsValue: tradeType === 'POINTS' ? pointsPrice : 0,
       pointsPrice: tradeType === 'POINTS' ? pointsPrice : undefined,
-      barterPreferences: tradeType === 'BARTER' ? (barterPreferences.trim() || 'Open to any eco-supplies or craft trades') : undefined,
-      imageUrl: customImageInput.trim() || imageUrl,
+      estimatedValueGhs: pointsPrice ? Math.round(pointsPrice / 2) : 20,
+      images: [img],
+      imageUrl: img,
       sellerId: currentUser.id,
       sellerName: currentUser.name,
       sellerAvatar: currentUser.avatar,
+      sellerTrustScore: 98,
       sellerRating: 4.9,
       sellerBadges: ['Verified Citizen', 'Circular Champion'],
+      community: district.trim() || location.trim(),
       location: location.trim(),
       district: district.trim(),
+      swapPreferences: barterPreferences.trim() || 'Open to eco-trades',
+      barterPreferences: tradeType === 'BARTER' ? [barterPreferences.trim() || 'Open to any eco-supplies or craft trades'] : [],
       status: 'AVAILABLE'
     });
 

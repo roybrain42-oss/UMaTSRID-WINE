@@ -31,6 +31,27 @@ import {
   AdminAuditLog 
 } from '../types';
 
+/**
+ * Strips undefined values recursively so Firestore never throws
+ * "Unsupported field value: undefined"
+ */
+function sanitizeForFirestore<T>(data: T): T {
+  if (data === null || data === undefined) return data;
+  if (Array.isArray(data)) {
+    return data.map(item => sanitizeForFirestore(item)) as unknown as T;
+  }
+  if (typeof data === 'object' && !(data instanceof Date)) {
+    const cleaned: Record<string, any> = {};
+    for (const [key, value] of Object.entries(data as Record<string, any>)) {
+      if (value !== undefined) {
+        cleaned[key] = sanitizeForFirestore(value);
+      }
+    }
+    return cleaned as T;
+  }
+  return data;
+}
+
 export const firestoreService = {
   /**
    * Save or update User Profile in Firestore
@@ -38,10 +59,10 @@ export const firestoreService = {
   async saveUserProfile(user: UserProfile): Promise<void> {
     try {
       const userRef = doc(db, 'users', user.id);
-      await setDoc(userRef, {
+      await setDoc(userRef, sanitizeForFirestore({
         ...user,
         updatedAt: new Date().toISOString()
-      }, { merge: true });
+      }), { merge: true });
     } catch (err) {
       console.warn('[Firestore] Error saving user profile:', err);
     }
@@ -130,7 +151,7 @@ export const firestoreService = {
   async saveAuditLog(log: AdminAuditLog): Promise<void> {
     try {
       const logRef = doc(db, 'admin_audit_logs', log.id);
-      await setDoc(logRef, log, { merge: true });
+      await setDoc(logRef, sanitizeForFirestore(log), { merge: true });
     } catch (err) {
       console.warn('[Firestore] Error saving audit log:', err);
     }
@@ -142,7 +163,7 @@ export const firestoreService = {
   async saveRewardItem(reward: RewardItem): Promise<void> {
     try {
       const rRef = doc(db, 'rewards', reward.id);
-      await setDoc(rRef, reward, { merge: true });
+      await setDoc(rRef, sanitizeForFirestore(reward), { merge: true });
     } catch (err) {
       console.warn('[Firestore] Error saving reward item:', err);
     }
@@ -195,7 +216,7 @@ export const firestoreService = {
   async saveSubmission(submission: WasteSubmission): Promise<void> {
     try {
       const subRef = doc(db, 'submissions', submission.id);
-      await setDoc(subRef, submission, { merge: true });
+      await setDoc(subRef, sanitizeForFirestore(submission), { merge: true });
     } catch (err) {
       console.warn('[Firestore] Error saving submission:', err);
     }
@@ -236,7 +257,7 @@ export const firestoreService = {
   async saveCollectionJob(job: CollectionJob): Promise<void> {
     try {
       const jobRef = doc(db, 'collection_jobs', job.id);
-      await setDoc(jobRef, job, { merge: true });
+      await setDoc(jobRef, sanitizeForFirestore(job), { merge: true });
     } catch (err) {
       console.warn('[Firestore] Error saving collection job:', err);
     }
@@ -248,7 +269,7 @@ export const firestoreService = {
   async saveTransaction(tx: PointTransaction): Promise<void> {
     try {
       const txRef = doc(db, 'point_transactions', tx.id);
-      await setDoc(txRef, tx, { merge: true });
+      await setDoc(txRef, sanitizeForFirestore(tx), { merge: true });
     } catch (err) {
       console.warn('[Firestore] Error saving transaction:', err);
     }
@@ -260,7 +281,7 @@ export const firestoreService = {
   async saveCashWithdrawal(record: CashWithdrawalRecord): Promise<void> {
     try {
       const wRef = doc(db, 'cash_withdrawals', record.id);
-      await setDoc(wRef, record, { merge: true });
+      await setDoc(wRef, sanitizeForFirestore(record), { merge: true });
     } catch (err) {
       console.warn('[Firestore] Error saving cash withdrawal:', err);
     }
@@ -272,7 +293,7 @@ export const firestoreService = {
   async saveRedemption(redemption: RewardRedemption): Promise<void> {
     try {
       const redRef = doc(db, 'reward_redemptions', redemption.id);
-      await setDoc(redRef, redemption, { merge: true });
+      await setDoc(redRef, sanitizeForFirestore(redemption), { merge: true });
     } catch (err) {
       console.warn('[Firestore] Error saving redemption:', err);
     }
@@ -284,7 +305,7 @@ export const firestoreService = {
   async saveRobotEvent(event: RobotSortingEvent): Promise<void> {
     try {
       const eventRef = doc(db, 'robot_events', event.id);
-      await setDoc(eventRef, event, { merge: true });
+      await setDoc(eventRef, sanitizeForFirestore(event), { merge: true });
     } catch (err) {
       console.warn('[Firestore] Error saving robot event:', err);
     }
@@ -296,7 +317,7 @@ export const firestoreService = {
   async saveRecyclerOrder(order: RecyclerOrder): Promise<void> {
     try {
       const orderRef = doc(db, 'recycler_orders', order.id);
-      await setDoc(orderRef, order, { merge: true });
+      await setDoc(orderRef, sanitizeForFirestore(order), { merge: true });
     } catch (err) {
       console.warn('[Firestore] Error saving recycler order:', err);
     }

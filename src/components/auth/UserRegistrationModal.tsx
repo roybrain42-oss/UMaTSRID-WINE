@@ -549,7 +549,7 @@ export const UserRegistrationModal: React.FC = () => {
             <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 max-w-md mx-auto text-left space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-slate-500 font-medium">Device Hardware:</span>
-                <span className="font-semibold text-emerald-700">{biometricCapability?.biometricLabel || 'Biometric Sensor'}</span>
+                <span className="font-semibold text-emerald-700">{biometricCapability?.biometricTypeLabel || (biometricCapability as any)?.biometricLabel || 'Biometric Sensor'}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-500 font-medium">Security Standard:</span>

@@ -51,15 +51,20 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
     createCommunityEvent({
       title: title.trim(),
       description: description.trim() || 'Join our local eco-warriors for a high-impact environmental cleanup drive.',
+      category: (eventType as any) || 'BEACH_CLEANUP',
       eventType,
       date,
       time,
       location: location.trim(),
       district: district.trim(),
+      community: district.trim() || location.trim(),
+      organizer: currentUser.name,
       organizerName: currentUser.name,
       organizerAvatar: currentUser.avatar,
       organizerRole: currentUser.role === 'ADMIN' ? 'EPA Ghana Officer' : 'Community Volunteer Lead',
+      bannerImage: bannerUrl || 'https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?w=800&auto=format&fit=crop&q=80',
       bannerUrl,
+      targetWasteGoalKg: targetCollectionKg || 500,
       targetCollectionKg,
       maxVolunteers,
       ecoPointsReward,
@@ -70,7 +75,6 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
         'Registration & Refreshments'
       ],
       equipmentProvided: equipmentInput.split(',').map(s => s.trim()).filter(Boolean),
-      status: 'UPCOMING'
     });
 
     onClose();

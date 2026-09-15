@@ -38,14 +38,17 @@ export const RequestTradeModal: React.FC<RequestTradeModalProps> = ({ item, isOp
     e.preventDefault();
     
     proposeSwapTrade({
+      itemId: item.id,
       swapItemId: item.id,
       itemTitle: item.title,
       sellerId: item.sellerId,
       sellerName: item.sellerName,
+      requesterId: currentUser.id,
+      requesterName: currentUser.name,
+      requesterAvatar: currentUser.avatar,
       buyerId: currentUser.id,
       buyerName: currentUser.name,
-      buyerPhone: currentUser.phone,
-      buyerAvatar: currentUser.avatar,
+      offerType: tradeType === 'POINTS' ? 'POINTS' : tradeType === 'BARTER' ? 'OFFER_ITEM' : 'FREE_PICKUP',
       tradeType,
       offeredPoints: tradeType === 'POINTS' ? offeredPoints : undefined,
       offeredItemTitle: tradeType === 'BARTER' ? offeredItemTitle.trim() : undefined,

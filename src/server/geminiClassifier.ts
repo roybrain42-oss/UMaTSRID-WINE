@@ -81,7 +81,7 @@ Carefully inspect the image:
     const userPrompt = `Analyze this waste image captured live on camera.${hint ? ` Optional user note: "${hint}"` : ''} Return the structured JSON classification.`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.7-flash',
+      model: 'gemini-3.8-flash',
       contents: [
         {
           parts: [

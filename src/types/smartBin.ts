@@ -51,8 +51,8 @@ export interface SmartBinChamber {
 
 export interface SmartBinDepositEvent {
   id: string;
-  binId: string;
-  binName: string;
+  binId?: string;
+  binName?: string;
   userId: string;
   userName: string;
   timestamp: string;
@@ -61,9 +61,9 @@ export interface SmartBinDepositEvent {
   material: string;
   weightKg: number;
   pointsAwarded: number;
-  co2SavedKg: number;
+  co2SavedKg?: number;
   ledColorTriggered: LedColorName;
-  status: 'ACCEPTED' | 'REJECTED' | 'FLAGGED';
+  status?: 'ACCEPTED' | 'REJECTED' | 'FLAGGED';
   chamberId?: string;
   imageUrl?: string;
   rejectionReason?: string;

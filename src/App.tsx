@@ -35,12 +35,14 @@ import { BiometricPromptModal } from './components/common/BiometricPromptModal';
 import { MobileAppHeader } from './components/layout/MobileAppHeader';
 import { MobileBottomNavigation } from './components/layout/MobileBottomNavigation';
 import { DeviceFrameSimulator } from './components/layout/DeviceFrameSimulator';
+import { AuthScreen } from './components/auth/AuthScreen';
 
 const AppContent: React.FC = () => {
   const { 
     currentView, 
     currentUser, 
     setCurrentView,
+    isRegistered,
     isAdminAuthenticated,
     showShareImpactModal,
     closeShareImpactModal,
@@ -51,6 +53,28 @@ const AppContent: React.FC = () => {
   } = useEcoSort();
 
   const isAdmin = currentUser.role === 'ADMIN';
+
+  // Force Login and Sign-Up page to be the first screen when the app is launched on a device
+  if (!isRegistered) {
+    return (
+      <DeviceFrameSimulator>
+        <div className="min-h-screen bg-[#0F172A] text-slate-100 antialiased font-sans flex flex-col justify-between relative">
+          <ToastContainer />
+          <AuthScreen />
+          <BiometricPromptModal
+            isOpen={showBiometricModal}
+            options={biometricPromptOptions}
+            onClose={closeBiometricPrompt}
+            onSuccess={(result) => {
+              if (biometricPromptOptions?.onSuccess) {
+                biometricPromptOptions.onSuccess(result);
+              }
+            }}
+          />
+        </div>
+      </DeviceFrameSimulator>
+    );
+  }
 
   return (
     <DeviceFrameSimulator>
@@ -178,33 +202,29 @@ interface ErrorBoundaryState {
   error?: Error;
 }
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(props: any) {
-    super(props);
-    (this as any).state = { hasError: false };
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  public override state: ErrorBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
   }
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('EcoSort caught error:', error, errorInfo);
   }
 
   handleReset = () => {
     try {
       localStorage.removeItem('ecosort_ghana_state_v2');
+      sessionStorage.removeItem('ecosort_session_active');
     } catch {
       // ignore
     }
     window.location.reload();
   };
 
-  render() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((this as any).state?.hasError) {
+  override render() {
+    if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6 text-slate-900">
           <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl max-w-lg w-full text-center space-y-4">
@@ -213,19 +233,18 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
             </div>
             <h2 className="text-2xl font-bold text-slate-900">EcoSort Runtime Recovery</h2>
             <p className="text-sm text-slate-600">
-              The application encountered a temporary state glitch. Click below to restore full verified Ghana demo data.
+              The application encountered a temporary state glitch. Click below to restore full verified Ghana pilot data.
             </p>
             <div className="pt-2 flex flex-col gap-2">
               <button
                 onClick={this.handleReset}
-                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md transition-colors"
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md transition-colors cursor-pointer"
               >
                 Reset to Default Pilot State & Reload
               </button>
               <button
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                onClick={() => (this as any).setState({ hasError: false })}
-                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-xs transition-colors"
+                onClick={() => this.setState({ hasError: false })}
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-xs transition-colors cursor-pointer"
               >
                 Retry Rendering
               </button>

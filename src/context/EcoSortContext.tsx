@@ -117,13 +117,17 @@ export type AppView =
   | 'smart-bin'
   | 'user-app' 
   | 'collector-app' 
+  | 'collector-jobs'
   | 'user-dashboard' 
   | 'leaderboard' 
   | 'rewards' 
   | 'recycler' 
+  | 'recycler-portal'
   | 'admin' 
+  | 'admin-dashboard'
   | 'impact' 
   | 'community'
+  | 'community-hub'
   | 'demo';
 
 export interface AppNotification {
@@ -258,6 +262,7 @@ interface EcoSortContextType {
   logoutUser: () => void;
   loginWithDemoUser: (roleName: UserRole) => void;
   loginAsAdminWithCredentials: (username: string, password: string) => { success: boolean; error?: string };
+  loginWithIdentifier: (identifier: string, passwordOrPin?: string) => { success: boolean; message?: string; user?: UserProfile };
   isAdminAuthenticated: boolean;
   showAdminAuthModal: boolean;
   setShowAdminAuthModal: (show: boolean) => void;
@@ -366,6 +371,8 @@ interface EcoSortContextType {
   addSwapItem: (item: Omit<CommunitySwapItem, 'id' | 'createdAt' | 'likesCount' | 'viewCount'>) => CommunitySwapItem;
   toggleLikeSwapItem: (itemId: string) => void;
   proposeSwapTrade: (tradeRequest: Omit<SwapTradeRequest, 'id' | 'createdAt' | 'status'>) => SwapTradeRequest;
+  acceptSwapTrade: (requestId: string) => void;
+  rejectSwapTrade: (requestId: string) => void;
   joinCommunityEvent: (eventId: string, volunteerRole?: string) => void;
   createCommunityEvent: (event: Omit<CommunityEvent, 'id' | 'registeredVolunteersCount' | 'currentProgressKg'>) => CommunityEvent;
   addForumPost: (post: Omit<CommunityForumPost, 'id' | 'createdAt' | 'upvotes' | 'commentsCount' | 'comments'>) => CommunityForumPost;
@@ -461,14 +468,8 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
     return fallback || key;
   }, [language]);
 
-  const [isRegistered, setIsRegistered] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem('ecosort_ghana_registered_v2');
-      return saved === 'true';
-    } catch {
-      return true;
-    }
-  });
+  // First screen defaults to unauthenticated so the user always lands on the Sign Up page
+  const [isRegistered, setIsRegistered] = useState<boolean>(false);
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [showAdminAuthModal, setShowAdminAuthModal] = useState<boolean>(false);
@@ -1523,6 +1524,7 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     try {
       localStorage.setItem('ecosort_ghana_registered_v2', 'true');
+      sessionStorage.setItem('ecosort_session_active', 'true');
     } catch (e) {}
 
     saveState({ currentUser: newUser, transactions: updatedTxs });
@@ -1783,6 +1785,7 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
 
       try {
         localStorage.setItem('ecosort_ghana_registered_v2', 'true');
+        sessionStorage.setItem('ecosort_session_active', 'true');
       } catch (e) {}
 
       saveState({ currentUser: newGoogleUser, transactions: updatedTxs });
@@ -1886,6 +1889,7 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
     setShowAuthModal(false);
     try {
       localStorage.setItem('ecosort_ghana_registered_v2', 'true');
+      sessionStorage.setItem('ecosort_session_active', 'true');
     } catch (e) {}
     addToast({
       title: 'Demo Session Active ⚡',
@@ -1911,6 +1915,7 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
       setShowAdminAuthModal(false);
       try {
         localStorage.setItem('ecosort_ghana_registered_v2', 'true');
+        sessionStorage.setItem('ecosort_session_active', 'true');
       } catch (e) {}
 
       soundEffects.playRewardChime();
@@ -1929,6 +1934,102 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
     return {
       success: false,
       error: 'Invalid administrator credentials. Authorized username is "UMaT SRID" and password is "wine2026".'
+    };
+  };
+
+  const loginWithIdentifier = (identifier: string, passwordOrPin?: string): { success: boolean; message?: string; user?: UserProfile } => {
+    const cleanId = (identifier || '').trim().toLowerCase();
+    const cleanDigits = cleanId.replace(/\D/g, '');
+
+    // Check admin credentials
+    if (
+      (cleanId === ADMIN_AUTH_CONFIG.username.toLowerCase() || cleanId === 'admin' || cleanId === 'srid@umat.edu.gh') &&
+      passwordOrPin === ADMIN_AUTH_CONFIG.password
+    ) {
+      setIsAdminAuthenticated(true);
+      setCurrentUser(DEMO_ADMIN);
+      setCurrentView('admin');
+      setIsRegistered(true);
+      setShowAuthModal(false);
+      try {
+        localStorage.setItem('ecosort_ghana_registered_v2', 'true');
+        sessionStorage.setItem('ecosort_session_active', 'true');
+      } catch (e) {}
+      addToast({
+        title: 'EPA Admin Authenticated 🛡️',
+        message: 'Welcome UMaT SRID EPA Officer! Full administrative command unlocked.',
+        type: 'success',
+        duration: 3500
+      });
+      return { success: true, user: DEMO_ADMIN };
+    }
+
+    // Check all users by email or phone
+    const foundUser = allUsers.find(u => {
+      const uEmail = (u.email || '').toLowerCase();
+      const uPhoneDigits = (u.phone || '').replace(/\D/g, '');
+      if (cleanId && uEmail === cleanId) return true;
+      if (cleanDigits && uPhoneDigits.length >= 7 && (uPhoneDigits.endsWith(cleanDigits) || cleanDigits.endsWith(uPhoneDigits))) return true;
+      if (u.name.toLowerCase() === cleanId) return true;
+      return false;
+    });
+
+    if (foundUser) {
+      setIsAdminAuthenticated(foundUser.role === 'ADMIN');
+      setCurrentUser(foundUser);
+      setIsRegistered(true);
+      setShowAuthModal(false);
+      try {
+        localStorage.setItem('ecosort_ghana_registered_v2', 'true');
+        sessionStorage.setItem('ecosort_session_active', 'true');
+      } catch (e) {}
+
+      switch (foundUser.role) {
+        case 'COLLECTION_AGENT': setCurrentView('collector-app'); break;
+        case 'RECYCLER': setCurrentView('recycler'); break;
+        case 'ADMIN': setCurrentView('admin'); break;
+        default: setCurrentView('user-dashboard'); break;
+      }
+
+      soundEffects.playRewardChime();
+      addToast({
+        title: `Welcome back, ${foundUser.name}! 🌿`,
+        message: `Signed in as ${foundUser.role.replace('_', ' ')}. Balance: ${foundUser.ecoPoints} EcoPoints.`,
+        type: 'success',
+        duration: 3500
+      });
+
+      return { success: true, user: foundUser };
+    }
+
+    // If identifier has 9+ digits or has an @ sign, allow smooth entry as active citizen!
+    if (cleanDigits.length >= 9 || cleanId.includes('@')) {
+      const detectedName = cleanId.includes('@')
+        ? cleanId.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+        : `Eco Citizen (${cleanDigits.slice(-4)})`;
+
+      const newUser = registerUser({
+        name: detectedName,
+        phone: cleanDigits.length >= 9 ? identifier : '+233 24 892 4110',
+        email: cleanId.includes('@') ? cleanId : `${cleanDigits}@ecosort.gh`,
+        location: 'University of Ghana (Legon Campus)',
+        community: 'University of Ghana (Legon Campus)',
+        address: 'Legon Direct Drop Point',
+        organization: 'Independent Citizen',
+        role: 'USER',
+        entityType: 'INDIVIDUAL',
+        institutionName: 'Independent Citizen',
+        memberCount: 1,
+        contactPerson: detectedName,
+        leaderboardOptIn: true,
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250'
+      });
+      return { success: true, user: newUser };
+    }
+
+    return { 
+      success: false, 
+      message: 'Account not found. Please enter your Ghana phone number or email, or switch to "Create Account".' 
     };
   };
 
@@ -3463,6 +3564,34 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
     return newRequest;
   }, [addToast, triggerCelebration]);
 
+  const acceptSwapTrade = useCallback((requestId: string) => {
+    setSwapTradeRequests(prev => prev.map(req => {
+      if (req.id === requestId) {
+        return { ...req, status: 'ACCEPTED' as const };
+      }
+      return req;
+    }));
+    addToast({
+      title: 'Trade Accepted! 🤝',
+      message: 'You have agreed to swap. Coordinate pickup/delivery in your community.',
+      type: 'success'
+    });
+  }, [addToast]);
+
+  const rejectSwapTrade = useCallback((requestId: string) => {
+    setSwapTradeRequests(prev => prev.map(req => {
+      if (req.id === requestId) {
+        return { ...req, status: 'DECLINED' as const };
+      }
+      return req;
+    }));
+    addToast({
+      title: 'Trade Declined',
+      message: 'You have declined this swap proposal.',
+      type: 'info'
+    });
+  }, [addToast]);
+
   const joinCommunityEvent = useCallback((eventId: string, volunteerRole: string = 'General Volunteer') => {
     setCommunityEvents(prev => prev.map(ev => {
       if (ev.id === eventId) {
@@ -4371,13 +4500,13 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
     });
 
     // Admin Audit Log entry
-    addAdminAuditLog(
-      'SYSTEM',
-      params.action === 'UNDER_REPAIR' ? 'USER_STATUS_CHANGED' : 'STATE_RESET',
-      `Smart Bin ${targetBin.name} marked as ${params.action === 'UNDER_REPAIR' ? 'UNDER REPAIR (Maintenance)' : 'SERVICED (Online)'} by ${currentUser.name} at ${timeStr}. Notes: ${newLog.issueDescription}`,
-      targetBin.id,
-      targetBin.name
-    );
+    addAdminAuditLog({
+      targetType: 'SYSTEM',
+      action: params.action === 'UNDER_REPAIR' ? 'USER_STATUS_CHANGED' : 'STATE_RESET',
+      details: `Smart Bin ${targetBin.name} marked as ${params.action === 'UNDER_REPAIR' ? 'UNDER REPAIR (Maintenance)' : 'SERVICED (Online)'} by ${currentUser.name} at ${timeStr}. Notes: ${newLog.issueDescription}`,
+      targetId: targetBin.id,
+      targetName: targetBin.name
+    });
 
     soundEffects.play('pop');
     if (params.action === 'SERVICED') {
@@ -4516,6 +4645,7 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
         logoutUser,
         loginWithDemoUser,
         loginAsAdminWithCredentials,
+        loginWithIdentifier,
         isAdminAuthenticated,
         showAdminAuthModal,
         setShowAdminAuthModal,
@@ -4580,6 +4710,8 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
         addSwapItem,
         toggleLikeSwapItem,
         proposeSwapTrade,
+        acceptSwapTrade,
+        rejectSwapTrade,
         joinCommunityEvent,
         createCommunityEvent,
         addForumPost,

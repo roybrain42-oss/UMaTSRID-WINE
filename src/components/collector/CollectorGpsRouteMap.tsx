@@ -107,7 +107,10 @@ export const CollectorGpsRouteMap: React.FC<CollectorGpsRouteMapProps> = ({
     return projectGpsToSvgCanvas(agentLat, agentLng);
   }, [agentLat, agentLng]);
 
-  const activeJob = selectedJob || jobsWithLiveDistance[0] || null;
+  const activeJob = useMemo(() => {
+    if (!selectedJob) return jobsWithLiveDistance[0] || null;
+    return jobsWithLiveDistance.find(j => j.id === selectedJob.id) || jobsWithLiveDistance[0] || null;
+  }, [selectedJob, jobsWithLiveDistance]);
 
   const handleLaunchNavigation = (job: typeof jobsWithLiveDistance[0]) => {
     const url = GpsService.getGoogleMapsDirectionsUrl(

@@ -1,6 +1,6 @@
 export type UserRole = 'USER' | 'COLLECTION_AGENT' | 'RECYCLER' | 'ADMIN' | 'COMMUNITY_ADMIN';
 
-export type EntityType = 'INDIVIDUAL' | 'SCHOOL' | 'COMMUNITY' | 'ORGANIZATION';
+export type EntityType = 'INDIVIDUAL' | 'SCHOOL' | 'COMMUNITY' | 'ORGANIZATION' | 'BUSINESS';
 
 export type WasteCategory = 'PLASTIC' | 'METAL' | 'PAPER' | 'GLASS' | 'ORGANIC' | 'E_WASTE' | 'OTHER';
 
@@ -8,6 +8,8 @@ export type WasteMaterial =
   | 'PET Plastic' 
   | 'HDPE Plastic' 
   | 'LDPE Sachet' 
+  | 'Water Sachet (LDPE)'
+  | 'Pure Water Sachet'
   | 'Aluminum Can' 
   | 'Tin Steel' 
   | 'Corrugated Paper' 
@@ -15,10 +17,13 @@ export type WasteMaterial =
   | 'Glass Beverage' 
   | 'Electronic Circuit' 
   | 'Organic Compost' 
-  | 'Other Mixed';
+  | 'Other Mixed'
+  | (string & {});
 
 export type CollectionStatus = 
   | 'REQUESTED' 
+  | 'AVAILABLE'
+  | 'ASSIGNED'
   | 'ACCEPTED' 
   | 'EN_ROUTE' 
   | 'COLLECTED' 
@@ -63,6 +68,7 @@ export interface UserProfile {
   requireBiometricForMoMo?: boolean;
   momoBiometricPolicy?: 'ALWAYS' | 'THRESHOLD_ONLY' | 'NEVER';
   momoBiometricThresholdGhs?: number;
+  completedSubmissionsCount?: number;
 }
 
 export interface AdminAuditLog {
@@ -134,10 +140,21 @@ export interface CollectionJob {
   status: CollectionStatus;
   assignedAgentId?: string;
   agentName?: string;
+  collectorId?: string;
+  collectorName?: string;
+  dynamicDistanceKm?: number;
+  jobLat?: number;
+  jobLng?: number;
+  mapX?: number;
+  mapY?: number;
   photoUrl: string;
   scheduledTime: string;
   notes?: string;
   createdAt: string;
+  category?: WasteCategory;
+  pickupAddress?: string;
+  estimatedPoints?: number;
+  pointsEarned?: number;
 }
 
 export interface RewardItem {
@@ -199,19 +216,21 @@ export * from './community';
 export interface PointTransaction {
   id: string;
   userId: string;
-  type: 'EARNED_WASTE' | 'EARNED_CHALLENGE' | 'EARNED_BONUS' | 'REDEEMED_REWARD' | 'SIMULATION_GRANT' | 'CASH_WITHDRAWAL_MOMO' | 'INSTANT_SCAN_EARN';
+  type: 'EARNED' | 'EARNED_WASTE' | 'EARNED_CHALLENGE' | 'EARNED_BONUS' | 'REDEEMED_REWARD' | 'SIMULATION_GRANT' | 'CASH_WITHDRAWAL_MOMO' | 'INSTANT_SCAN_EARN' | (string & {});
   amount: number;
   description: string;
   referenceId?: string;
-  createdAt: string;
-  balanceAfter: number;
+  source?: string;
+  timestamp?: string;
+  createdAt?: string;
+  balanceAfter?: number;
 }
 
 export interface LeaderboardEntry {
   rank: number;
   id: string;
   name: string;
-  type: 'INDIVIDUAL' | 'SCHOOL' | 'COMMUNITY' | 'ORGANIZATION' | 'UNIVERSITY';
+  type: 'INDIVIDUAL' | 'SCHOOL' | 'COMMUNITY' | 'ORGANIZATION' | 'UNIVERSITY' | (string & {});
   location: string;
   wasteCollectedKg: number;
   pointsEarned: number;
