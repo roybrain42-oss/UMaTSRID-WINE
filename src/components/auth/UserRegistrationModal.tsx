@@ -36,16 +36,6 @@ import { UserRole, EntityType } from '../../types';
 import { LanguageSwitcher } from '../layout/LanguageSwitcher';
 import { AdminLoginForm } from './AdminLoginForm';
 
-// Curated Ghana Avatars
-const GHANA_AVATARS = [
-  { id: 'av-1', name: 'Bright (UG Student)', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250', tag: 'Citizen' },
-  { id: 'av-2', name: 'Ama (KNUST Eco Club)', url: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&q=80&w=250', tag: 'Citizen' },
-  { id: 'av-3', name: 'Kwame (Fleet Agent)', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250', tag: 'Collector' },
-  { id: 'av-4', name: 'Kofi (Logistics Pro)', url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=250', tag: 'Collector' },
-  { id: 'av-5', name: 'UMaT SRID (EPA Admin)', url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=250', tag: 'Admin' },
-  { id: 'av-6', name: 'Abena (Circular Ops)', url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=250', tag: 'Recycler' },
-];
-
 const GHANA_COMMUNITIES = [
   'University of Ghana (Legon Campus)',
   'KNUST Campus (Kumasi)',
@@ -100,7 +90,7 @@ export const UserRegistrationModal: React.FC = () => {
     isBiometricsEnrolled
   } = useEcoSort();
 
-  const [mode, setMode] = useState<'GOOGLE' | 'REGISTER' | 'DEMO_LOGIN' | 'BIOMETRIC' | 'ADMIN_LOGIN'>('GOOGLE');
+  const [mode, setMode] = useState<'GOOGLE' | 'REGISTER' | 'BIOMETRIC' | 'ADMIN_LOGIN'>('REGISTER');
   const [googleSelectedRole, setGoogleSelectedRole] = useState<UserRole>('USER');
   
   // Registration form state
@@ -120,9 +110,6 @@ export const UserRegistrationModal: React.FC = () => {
   const [address, setAddress] = useState<string>('');
   const [organization, setOrganization] = useState<string>('University of Ghana');
   const [ghanaCardNumber, setGhanaCardNumber] = useState<string>('');
-  const [avatar, setAvatar] = useState<string>(GHANA_AVATARS[0].url);
-  const [customAvatarUploaded, setCustomAvatarUploaded] = useState<boolean>(false);
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState<boolean>(false);
   const [enrollBiometricsOnRegister, setEnrollBiometricsOnRegister] = useState<boolean>(true);
   const [agreedTerms, setAgreedTerms] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -137,46 +124,6 @@ export const UserRegistrationModal: React.FC = () => {
     const profile = await loginWithGoogle(targetRole);
     if (profile) {
       setShowAuthModal(false);
-    }
-  };
-
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      setErrors(prev => ({ ...prev, avatar: 'Please select an image file (PNG, JPG, JPEG, WEBP).' }));
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setErrors(prev => ({ ...prev, avatar: 'Photo size should be less than 5MB.' }));
-      return;
-    }
-
-    setIsUploadingPhoto(true);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        setAvatar(dataUrl);
-        setCustomAvatarUploaded(true);
-        setErrors(prev => ({ ...prev, avatar: '' }));
-      }
-      setIsUploadingPhoto(false);
-    };
-    reader.onerror = () => {
-      setErrors(prev => ({ ...prev, avatar: 'Failed to read the selected image.' }));
-      setIsUploadingPhoto(false);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleRemoveCustomAvatar = () => {
-    setAvatar(GHANA_AVATARS[0].url);
-    setCustomAvatarUploaded(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
     }
   };
 
@@ -244,7 +191,6 @@ export const UserRegistrationModal: React.FC = () => {
         memberCount: entityType === 'INDIVIDUAL' ? 1 : Math.max(1, memberCount),
         contactPerson: contactPerson.trim() || name.trim(),
         leaderboardOptIn,
-        avatar,
         ghanaCardNumber: ghanaCardNumber.trim(),
         ghanaTelecomNetwork: detectedNetwork
       });
@@ -296,9 +242,7 @@ export const UserRegistrationModal: React.FC = () => {
                   ? 'Register for EcoSort Ghana' 
                   : mode === 'BIOMETRIC' 
                   ? '1-Touch Biometric Sign-In' 
-                  : mode === 'ADMIN_LOGIN'
-                  ? 'EPA Admin Command Login'
-                  : 'Select Demo Persona'}
+                  : 'EPA Admin Command Login'}
               </h2>
               <p className="text-emerald-50/90 text-xs mt-0.5 max-w-xl font-medium">
                 {mode === 'GOOGLE'
@@ -307,14 +251,25 @@ export const UserRegistrationModal: React.FC = () => {
                   ? 'Join Ghana’s national smart recycling grid. Upload waste, earn EcoPoints, and request instant MoMo payouts.' 
                   : mode === 'BIOMETRIC'
                   ? 'Zero-password authentication with device-bound WebAuthn passkey.'
-                  : mode === 'ADMIN_LOGIN'
-                  ? 'Authorized administrator login with username "UMaT SRID" and password "wine2026".'
-                  : 'Explore the platform instantly using a pre-configured Ghanaian pilot role.'}
+                  : 'Authorized administrator login with username "UMaT SRID" and password "wine2026".'}
               </p>
             </div>
 
             {/* Mode Switcher Tabs */}
             <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setMode('REGISTER')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  mode === 'REGISTER' 
+                    ? 'bg-white text-emerald-800 shadow-md ring-2 ring-white/60 font-extrabold' 
+                    : 'bg-black/25 text-white/90 hover:text-white hover:bg-black/35 border border-white/20'
+                }`}
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>Sign Up Form</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => setMode('GOOGLE')}
@@ -326,19 +281,6 @@ export const UserRegistrationModal: React.FC = () => {
               >
                 <GoogleIcon className="w-3.5 h-3.5" />
                 <span>Google Sign-In</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setMode('REGISTER')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  mode === 'REGISTER' 
-                    ? 'bg-white text-emerald-800 shadow-md ring-2 ring-white/60 font-extrabold' 
-                    : 'bg-black/25 text-white/90 hover:text-white hover:bg-black/35 border border-white/20'
-                }`}
-              >
-                <User className="w-3.5 h-3.5" />
-                <span>Manual Form</span>
               </button>
 
               <button
@@ -365,19 +307,6 @@ export const UserRegistrationModal: React.FC = () => {
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>Admin Login</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setMode('DEMO_LOGIN')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  mode === 'DEMO_LOGIN' 
-                    ? 'bg-amber-400 text-slate-950 font-black shadow-md ring-2 ring-white/60' 
-                    : 'bg-black/25 text-white/90 hover:text-white hover:bg-black/35 border border-white/20'
-                }`}
-              >
-                <Zap className="w-3.5 h-3.5" />
-                <span>Demo Roles</span>
               </button>
             </div>
           </div>
@@ -520,14 +449,6 @@ export const UserRegistrationModal: React.FC = () => {
                 >
                   Manual Registration Form
                 </button>
-                <span>•</span>
-                <button
-                  type="button"
-                  onClick={() => setMode('DEMO_LOGIN')}
-                  className="hover:text-amber-700 underline cursor-pointer font-medium"
-                >
-                  Explore Demo Personas
-                </button>
               </div>
             </div>
           </div>
@@ -602,104 +523,13 @@ export const UserRegistrationModal: React.FC = () => {
               </button>
             </div>
           </div>
-        ) : mode === 'DEMO_LOGIN' ? (
-          <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-4 bg-white">
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
-              <Sparkles className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-              <div className="text-xs text-slate-700">
-                <p className="font-bold text-amber-900 mb-0.5">Instant Role Testing</p>
-                Select an established Ghanaian persona to test the respective workflow without filling out registration.
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              <button
-                onClick={() => loginWithDemoUser('USER')}
-                className="p-4 rounded-2xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200 hover:border-emerald-500/60 text-left transition-all group cursor-pointer shadow-xs"
-              >
-                <div className="flex items-center gap-3">
-                  <img src={GHANA_AVATARS[0].url} alt="Bright" className="w-11 h-11 rounded-xl object-cover border border-slate-200" />
-                  <div>
-                    <span className="text-xs font-bold text-slate-900 block group-hover:text-emerald-700">Bright Mensah</span>
-                    <span className="text-[10px] text-emerald-700 font-semibold block">Citizen • UG Student</span>
-                    <span className="text-[10px] text-slate-500 block">425 EcoPoints • Legon</span>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => loginWithDemoUser('COLLECTION_AGENT')}
-                className="p-4 rounded-2xl bg-slate-50 hover:bg-amber-50/50 border border-slate-200 hover:border-amber-500/60 text-left transition-all group cursor-pointer shadow-xs"
-              >
-                <div className="flex items-center gap-3">
-                  <img src={GHANA_AVATARS[2].url} alt="Kwame" className="w-11 h-11 rounded-xl object-cover border border-slate-200" />
-                  <div>
-                    <span className="text-xs font-bold text-slate-900 block group-hover:text-amber-700">Kwame Asante</span>
-                    <span className="text-[10px] text-amber-700 font-semibold block">Field Logistics Agent</span>
-                    <span className="text-[10px] text-slate-500 block">Madina & Legon Route</span>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => loginWithDemoUser('RECYCLER')}
-                className="p-4 rounded-2xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200 hover:border-emerald-500/60 text-left transition-all group cursor-pointer shadow-xs"
-              >
-                <div className="flex items-center gap-3">
-                  <img src={GHANA_AVATARS[5].url} alt="EcoPlast" className="w-11 h-11 rounded-xl object-cover border border-slate-200" />
-                  <div>
-                    <span className="text-xs font-bold text-slate-900 block group-hover:text-emerald-700">Accra Circular Plastics</span>
-                    <span className="text-[10px] text-emerald-700 font-semibold block">Industrial Recycler</span>
-                    <span className="text-[10px] text-slate-500 block">Tema Industrial Area</span>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setMode('ADMIN_LOGIN')}
-                className="p-4 rounded-2xl bg-slate-50 hover:bg-purple-50/50 border border-slate-200 hover:border-purple-500/60 text-left transition-all group cursor-pointer shadow-xs"
-              >
-                <div className="flex items-center gap-3">
-                  <img src={GHANA_AVATARS[4].url} alt="UMaT SRID" className="w-11 h-11 rounded-xl object-cover border border-slate-200" />
-                  <div>
-                    <span className="text-xs font-bold text-slate-900 block group-hover:text-purple-700">UMaT SRID</span>
-                    <span className="text-[10px] text-purple-700 font-semibold block">EPA Command Officer</span>
-                    <span className="text-[10px] text-slate-500 block font-mono">User: UMaT SRID • Pass: wine2026</span>
-                  </div>
-                </div>
-              </button>
-            </div>
-
-            {/* Quick Google Sign In from Demo Tab */}
-            <div className="pt-2">
-              <button
-                type="button"
-                id="demo-google-signin-btn"
-                onClick={() => handleGoogleSignIn('USER')}
-                disabled={isGoogleAuthLoading}
-                className="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs border border-slate-300 shadow-xs flex items-center justify-center gap-2.5 cursor-pointer transition-all disabled:opacity-50"
-              >
-                {isGoogleAuthLoading ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-600" />
-                    <span>Signing in with Google...</span>
-                  </>
-                ) : (
-                  <>
-                    <GoogleIcon className="w-4 h-4" />
-                    <span>Or Sign in with your real Google Account</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
         ) : mode === 'ADMIN_LOGIN' ? (
           /* EPA Ghana Official Admin Authentication View */
           <div className="flex-1 overflow-y-auto p-6 md:p-8 bg-white flex flex-col items-center justify-center animate-in fade-in">
             <AdminLoginForm 
               inline
               onSuccess={() => setShowAuthModal(false)}
-              onCancel={() => setMode('DEMO_LOGIN')}
+              onCancel={() => setMode('REGISTER')}
             />
           </div>
         ) : (
@@ -1177,124 +1007,6 @@ export const UserRegistrationModal: React.FC = () => {
                   </div>
                 </div>
 
-              </div>
-
-              {/* Step 4: Profile Picture & Avatar */}
-              <div className="space-y-2.5 pt-2 border-t border-slate-200">
-                <div className="flex items-center justify-between">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600">
-                    4. Profile Photo & Avatar
-                  </label>
-                  <span className="text-[10px] sm:text-[11px] text-emerald-700 font-semibold">
-                    {customAvatarUploaded ? '✨ Custom photo uploaded' : 'Upload photo or choose avatar'}
-                  </span>
-                </div>
-
-                {/* Upload & Preview Card */}
-                <div className="bg-slate-50 rounded-2xl p-3 border border-slate-200 flex flex-col sm:flex-row items-center gap-3">
-                  
-                  {/* Active Photo Preview */}
-                  <div className="relative shrink-0 group">
-                    <img 
-                      src={avatar} 
-                      alt="Selected Profile" 
-                      className="w-14 h-14 rounded-2xl object-cover border-2 border-emerald-500 shadow-sm"
-                    />
-                    {customAvatarUploaded && (
-                      <div className="absolute -top-1.5 -right-1.5 bg-emerald-600 text-white p-0.5 rounded-full shadow-xs">
-                        <CheckCircle2 className="w-3 h-3" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Upload Action Controls */}
-                  <div className="flex-1 space-y-1.5 text-center sm:text-left">
-                    <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
-                      <input 
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handlePhotoUpload}
-                        accept="image/png, image/jpeg, image/jpg, image/webp"
-                        className="hidden"
-                      />
-
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploadingPhoto}
-                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
-                      >
-                        <Upload className="w-3.5 h-3.5" />
-                        <span>{isUploadingPhoto ? 'Uploading...' : 'Upload Picture'}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (fileInputRef.current) {
-                            fileInputRef.current.setAttribute('capture', 'user');
-                            fileInputRef.current.click();
-                          }
-                        }}
-                        className="px-2.5 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold border border-slate-300 flex items-center gap-1.5 transition-all cursor-pointer"
-                        title="Take a photo using camera"
-                      >
-                        <Camera className="w-3.5 h-3.5 text-slate-700" />
-                        <span>Take Photo</span>
-                      </button>
-
-                      {customAvatarUploaded && (
-                        <button
-                          type="button"
-                          onClick={handleRemoveCustomAvatar}
-                          className="px-2 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer"
-                          title="Remove uploaded photo"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>Reset</span>
-                        </button>
-                      )}
-                    </div>
-
-                    <p className="text-[10px] text-slate-500">
-                      JPG, PNG or WEBP up to 5MB.
-                    </p>
-
-                    {errors.avatar && (
-                      <p className="text-[10px] text-rose-600 font-semibold flex items-center gap-1">
-                        <X className="w-3 h-3" /> {errors.avatar}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Or Select from Curated Ghana Avatars */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-                  {GHANA_AVATARS.map((av) => (
-                    <button
-                      key={av.id}
-                      type="button"
-                      onClick={() => {
-                        setAvatar(av.url);
-                        setCustomAvatarUploaded(false);
-                        if (errors.avatar) setErrors(prev => ({ ...prev, avatar: '' }));
-                      }}
-                      className={`relative rounded-xl p-0.5 shrink-0 border-2 transition-all cursor-pointer ${
-                        avatar === av.url && !customAvatarUploaded
-                          ? 'border-emerald-600 bg-emerald-50 scale-105 shadow-sm' 
-                          : 'border-slate-200 opacity-70 hover:opacity-100 hover:border-slate-400'
-                      }`}
-                      title={av.name}
-                    >
-                      <img src={av.url} alt={av.name} className="w-9 h-9 rounded-lg object-cover" />
-                      {avatar === av.url && !customAvatarUploaded && (
-                        <div className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-600 text-white flex items-center justify-center">
-                          <CheckCircle2 className="w-2.5 h-2.5" />
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Ghanaian Dialect & Language Selection */}

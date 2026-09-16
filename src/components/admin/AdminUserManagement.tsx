@@ -285,11 +285,9 @@ export const AdminUserManagement: React.FC = () => {
                 {/* Left: User Identity & Badges */}
                 <div className="flex items-start sm:items-center gap-3.5 min-w-[280px]">
                   <div className="relative shrink-0">
-                    <img 
-                      src={user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'} 
-                      alt={user.name}
-                      className="w-12 h-12 rounded-2xl object-cover border border-slate-200 dark:border-slate-700"
-                    />
+                    <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300">
+                      <User className="w-6 h-6" />
+                    </div>
                     <span 
                       className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-slate-900 ${
                         (user.status || 'ACTIVE') === 'ACTIVE' 

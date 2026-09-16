@@ -426,7 +426,34 @@ interface EcoSortContextType {
 
 const EcoSortContext = createContext<EcoSortContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'ecosort_ghana_state_v2';
+const STORAGE_KEY = 'ecosort_ghana_state_v3';
+export const AUTH_SESSION_KEY = 'ecosort_ghana_auth_session_active';
+
+// Utility helper to filter out any residual demo personas from legacy state/cloud
+const filterResidualDemoUsers = (users: UserProfile[]): UserProfile[] => {
+  if (!Array.isArray(users)) return [];
+  return users.filter(u => 
+    u && 
+    u.id && 
+    u.id !== 'usr-bright-01' && 
+    u.id !== 'usr-ama-serwaa' && 
+    u.id !== 'usr-kwame-asante' && 
+    u.id !== 'usr-samuel-agyapong' &&
+    u.id !== 'usr-achimota-greenteam' &&
+    !u.id.startsWith('agt-kwame') && 
+    !u.id.startsWith('rec-accra') && 
+    u.id !== 'adm-umat-srid'
+  );
+};
+
+const filterResidualDemoSubmissions = (subs: WasteSubmission[]): WasteSubmission[] => {
+  if (!Array.isArray(subs)) return [];
+  return subs.filter(s => 
+    s && 
+    s.userId !== 'usr-bright-01' && 
+    s.userName !== 'Bright Mensah'
+  );
+};
 
 export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserProfile>(INITIAL_USER);
@@ -468,8 +495,23 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
     return fallback || key;
   }, [language]);
 
-  // First screen defaults to unauthenticated so the user always lands on the Sign Up page
-  const [isRegistered, setIsRegistered] = useState<boolean>(false);
+  // First screen stays firmly on the Sign Up page until an explicit sign-up or login action is performed
+  const [isRegistered, setIsRegistered] = useState<boolean>(() => {
+    try {
+      const sessionActive = localStorage.getItem(AUTH_SESSION_KEY) === 'true';
+      if (!sessionActive) return false;
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed?.currentUser?.id && !['usr-bright-01', 'usr-ama-serwaa', 'usr-kwame-asante'].includes(parsed.currentUser.id)) {
+          return true;
+        }
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  });
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [showAdminAuthModal, setShowAdminAuthModal] = useState<boolean>(false);
@@ -1039,21 +1081,30 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
   // 1. Initial State Hydration from IndexedDB (with LocalStorage fast-path)
   useEffect(() => {
+    // Clear legacy demo keys from older versions to ensure clean slate
+    try {
+      localStorage.removeItem('ecosort_ghana_state_v2');
+      localStorage.removeItem('ecosort_ghana_registered_v2');
+      sessionStorage.removeItem('ecosort_session_active');
+    } catch {}
+
     // Fast synchronous recovery
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed.allUsers) && parsed.allUsers.length > 0) setAllUsers(parsed.allUsers);
-        if (Array.isArray(parsed.adminAuditLogs) && parsed.adminAuditLogs.length > 0) setAdminAuditLogs(parsed.adminAuditLogs);
-        if (Array.isArray(parsed.submissions) && parsed.submissions.length > 0) setSubmissions(parsed.submissions);
-        if (Array.isArray(parsed.collectionJobs) && parsed.collectionJobs.length > 0) setCollectionJobs(parsed.collectionJobs);
-        if (parsed.currentUser && typeof parsed.currentUser.ecoPoints === 'number') setCurrentUser(parsed.currentUser);
-        if (Array.isArray(parsed.transactions) && parsed.transactions.length > 0) setTransactions(parsed.transactions);
-        if (Array.isArray(parsed.cashWithdrawals) && parsed.cashWithdrawals.length > 0) setCashWithdrawals(parsed.cashWithdrawals);
+        if (Array.isArray(parsed.allUsers)) setAllUsers(filterResidualDemoUsers(parsed.allUsers));
+        if (Array.isArray(parsed.adminAuditLogs)) setAdminAuditLogs(parsed.adminAuditLogs);
+        if (Array.isArray(parsed.submissions)) setSubmissions(filterResidualDemoSubmissions(parsed.submissions));
+        if (Array.isArray(parsed.collectionJobs)) setCollectionJobs(parsed.collectionJobs);
+        if (parsed.currentUser && parsed.currentUser.id && !['usr-bright-01', 'usr-ama-serwaa', 'usr-kwame-asante'].includes(parsed.currentUser.id)) {
+          setCurrentUser(parsed.currentUser);
+        }
+        if (Array.isArray(parsed.transactions)) setTransactions(parsed.transactions);
+        if (Array.isArray(parsed.cashWithdrawals)) setCashWithdrawals(parsed.cashWithdrawals);
         if (Array.isArray(parsed.redemptions)) setRedemptions(parsed.redemptions);
         if (Array.isArray(parsed.rewardRules) && parsed.rewardRules.length > 0) setRewardRules(parsed.rewardRules);
-        if (Array.isArray(parsed.robotEvents) && parsed.robotEvents.length > 0) setRobotEvents(parsed.robotEvents);
+        if (Array.isArray(parsed.robotEvents)) setRobotEvents(parsed.robotEvents);
       }
     } catch (e) {
       console.warn('Recovered baseline EcoSort state:', e);
@@ -1062,21 +1113,23 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
     // Comprehensive Async Hydration from IndexedDB Local Cache
     localDataCache.loadCachedState().then(cached => {
       if (cached) {
-        if (cached.currentUser) setCurrentUser(cached.currentUser);
-        if (Array.isArray(cached.allUsers) && cached.allUsers.length > 0) setAllUsers(cached.allUsers);
-        if (Array.isArray(cached.adminAuditLogs) && cached.adminAuditLogs.length > 0) setAdminAuditLogs(cached.adminAuditLogs);
-        if (Array.isArray(cached.submissions) && cached.submissions.length > 0) setSubmissions(cached.submissions);
-        if (Array.isArray(cached.collectionJobs) && cached.collectionJobs.length > 0) setCollectionJobs(cached.collectionJobs);
-        if (Array.isArray(cached.transactions) && cached.transactions.length > 0) setTransactions(cached.transactions);
-        if (Array.isArray(cached.cashWithdrawals) && cached.cashWithdrawals.length > 0) setCashWithdrawals(cached.cashWithdrawals);
-        if (Array.isArray(cached.redemptions) && cached.redemptions.length > 0) setRedemptions(cached.redemptions);
+        if (cached.currentUser && cached.currentUser.id && !['usr-bright-01', 'usr-ama-serwaa', 'usr-kwame-asante'].includes(cached.currentUser.id)) {
+          setCurrentUser(cached.currentUser);
+        }
+        if (Array.isArray(cached.allUsers)) setAllUsers(filterResidualDemoUsers(cached.allUsers));
+        if (Array.isArray(cached.adminAuditLogs)) setAdminAuditLogs(cached.adminAuditLogs);
+        if (Array.isArray(cached.submissions)) setSubmissions(filterResidualDemoSubmissions(cached.submissions));
+        if (Array.isArray(cached.collectionJobs)) setCollectionJobs(cached.collectionJobs);
+        if (Array.isArray(cached.transactions)) setTransactions(cached.transactions);
+        if (Array.isArray(cached.cashWithdrawals)) setCashWithdrawals(cached.cashWithdrawals);
+        if (Array.isArray(cached.redemptions)) setRedemptions(cached.redemptions);
         if (Array.isArray(cached.rewardRules) && cached.rewardRules.length > 0) setRewardRules(cached.rewardRules);
-        if (Array.isArray(cached.robotEvents) && cached.robotEvents.length > 0) setRobotEvents(cached.robotEvents);
+        if (Array.isArray(cached.robotEvents)) setRobotEvents(cached.robotEvents);
         if (Array.isArray(cached.leaderboard) && cached.leaderboard.length > 0) setLeaderboard(cached.leaderboard);
         if (cached.challenge) setChallenge(cached.challenge);
         if (Array.isArray(cached.recyclerInventory) && cached.recyclerInventory.length > 0) setRecyclerInventory(cached.recyclerInventory);
-        if (Array.isArray(cached.recyclerOrders) && cached.recyclerOrders.length > 0) setRecyclerOrders(cached.recyclerOrders);
-        if (Array.isArray(cached.notifications) && cached.notifications.length > 0) setNotifications(cached.notifications);
+        if (Array.isArray(cached.recyclerOrders)) setRecyclerOrders(cached.recyclerOrders);
+        if (Array.isArray(cached.notifications)) setNotifications(cached.notifications);
         if (cached.lastCachedTimestamp) {
           setLastCachedAt(new Date(cached.lastCachedTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
         }
@@ -1091,26 +1144,30 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
     });
 
     // 3. Initialize Cloud Firestore seed & real-time synchronization
-    firestoreService.seedInitialCloudData(INITIAL_SUBMISSIONS, INITIAL_COLLECTION_JOBS, INITIAL_USER);
+    if (INITIAL_USER.id) {
+      firestoreService.seedInitialCloudData(INITIAL_SUBMISSIONS, INITIAL_COLLECTION_JOBS, INITIAL_USER);
+    }
 
     const unsubUsers = firestoreService.subscribeToUsers((cloudUsers) => {
       if (cloudUsers && cloudUsers.length > 0) {
+        const filteredCloud = filterResidualDemoUsers(cloudUsers);
         setAllUsers(prev => {
-          const cloudIds = new Set(cloudUsers.map(u => u.id));
+          const cloudIds = new Set(filteredCloud.map(u => u.id));
           const localOnly = prev.filter(u => !cloudIds.has(u.id));
-          return [...localOnly, ...cloudUsers];
+          return [...localOnly, ...filteredCloud];
         });
       }
     });
 
     const unsubSubmissions = firestoreService.subscribeToSubmissions((cloudSubs) => {
       if (cloudSubs && cloudSubs.length > 0) {
+        const filteredSubs = filterResidualDemoSubmissions(cloudSubs);
         setSubmissions(prev => {
           // Merge cloud submissions with locally pending offline queue items
           const offlinePending = prev.filter(s => s.isOfflineQueued);
-          const cloudIds = new Set(cloudSubs.map(s => s.id));
+          const cloudIds = new Set(filteredSubs.map(s => s.id));
           const uniqueOffline = offlinePending.filter(s => !cloudIds.has(s.id));
-          return [...uniqueOffline, ...cloudSubs];
+          return [...uniqueOffline, ...filteredSubs];
         });
       }
     });
@@ -1147,10 +1204,10 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
               googleId: fbUser.uid
             };
             setCurrentUser(updatedProfile);
-            setIsRegistered(true);
-            try {
-              localStorage.setItem('ecosort_ghana_registered_v2', 'true');
-            } catch {}
+            // Only mark as registered if the user has an explicit active auth session
+            if (localStorage.getItem(AUTH_SESSION_KEY) === 'true') {
+              setIsRegistered(true);
+            }
           }
         } catch (err) {
           console.warn('[Firebase Auth] Profile sync note:', err);
@@ -1359,29 +1416,30 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
   }, [addToast, updateToast]);
 
   const switchRole = (roleName: 'USER' | 'COLLECTION_AGENT' | 'RECYCLER' | 'ADMIN') => {
+    if (roleName === 'ADMIN') {
+      if (isAdminAuthenticated) {
+        setCurrentUser(prev => ({ ...prev, role: 'ADMIN' }));
+        setCurrentView('admin');
+      } else {
+        setShowAdminAuthModal(true);
+      }
+      return;
+    }
+    setIsAdminAuthenticated(false);
+    setCurrentUser(prev => ({
+      ...prev,
+      role: roleName,
+      name: prev.name || (roleName === 'COLLECTION_AGENT' ? 'Fleet Agent' : roleName === 'RECYCLER' ? 'Recycler Hub' : 'Citizen Member')
+    }));
     switch (roleName) {
       case 'USER':
-        setIsAdminAuthenticated(false);
-        setCurrentUser(INITIAL_USER);
         setCurrentView('user-dashboard');
         break;
       case 'COLLECTION_AGENT':
-        setIsAdminAuthenticated(false);
-        setCurrentUser(DEMO_AGENTS[0]);
         setCurrentView('collector-app');
         break;
       case 'RECYCLER':
-        setIsAdminAuthenticated(false);
-        setCurrentUser(DEMO_RECYCLER);
         setCurrentView('recycler');
-        break;
-      case 'ADMIN':
-        if (isAdminAuthenticated) {
-          setCurrentUser(DEMO_ADMIN);
-          setCurrentView('admin');
-        } else {
-          setShowAdminAuthModal(true);
-        }
         break;
     }
   };
@@ -1509,6 +1567,7 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     setCurrentUser(newUser);
     setTransactions(updatedTxs);
+    setAllUsers(prev => [newUser, ...prev.filter(u => u.id !== newUser.id)]);
     setNotifications(prev => [welcomeNotif, ...prev]);
     setIsRegistered(true);
     setShowAuthModal(false);
@@ -1523,11 +1582,14 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
 
     try {
-      localStorage.setItem('ecosort_ghana_registered_v2', 'true');
+      localStorage.setItem(AUTH_SESSION_KEY, 'true');
       sessionStorage.setItem('ecosort_session_active', 'true');
     } catch (e) {}
 
-    saveState({ currentUser: newUser, transactions: updatedTxs });
+    saveState({ 
+      currentUser: newUser, 
+      transactions: updatedTxs
+    });
 
     // Sync new profile to Cloud Firestore
     firestoreService.saveUserProfile(newUser);
@@ -1692,7 +1754,8 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
         }
 
         try {
-          localStorage.setItem('ecosort_ghana_registered_v2', 'true');
+          localStorage.setItem(AUTH_SESSION_KEY, 'true');
+          sessionStorage.setItem('ecosort_session_active', 'true');
         } catch {}
 
         await firestoreService.saveUserProfile(updatedProfile);
@@ -1784,7 +1847,7 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
       }
 
       try {
-        localStorage.setItem('ecosort_ghana_registered_v2', 'true');
+        localStorage.setItem(AUTH_SESSION_KEY, 'true');
         sessionStorage.setItem('ecosort_session_active', 'true');
       } catch (e) {}
 
@@ -1845,14 +1908,17 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
     setIsAdminAuthenticated(false);
     setFirebaseUser(null);
+    setCurrentUser(INITIAL_USER);
     setIsRegistered(false);
-    setShowAuthModal(true);
+    setShowAuthModal(false);
+    setCurrentView('user-dashboard');
     try {
-      localStorage.setItem('ecosort_ghana_registered_v2', 'false');
+      localStorage.removeItem(AUTH_SESSION_KEY);
+      sessionStorage.removeItem('ecosort_session_active');
     } catch (e) {}
     addToast({
       title: 'Signed Out',
-      message: 'You have been logged out. Sign in with Google, register, or choose a demo persona.',
+      message: 'You have been logged out. Please sign in or register to continue.',
       type: 'info',
       duration: 3000
     });
@@ -1888,11 +1954,11 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
     setIsRegistered(true);
     setShowAuthModal(false);
     try {
-      localStorage.setItem('ecosort_ghana_registered_v2', 'true');
+      localStorage.setItem(AUTH_SESSION_KEY, 'true');
       sessionStorage.setItem('ecosort_session_active', 'true');
     } catch (e) {}
     addToast({
-      title: 'Demo Session Active ⚡',
+      title: 'Session Active ⚡',
       message: `Signed in as ${roleName} mode.`,
       type: 'info',
       duration: 3000
@@ -1914,7 +1980,7 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
       setShowAuthModal(false);
       setShowAdminAuthModal(false);
       try {
-        localStorage.setItem('ecosort_ghana_registered_v2', 'true');
+        localStorage.setItem(AUTH_SESSION_KEY, 'true');
         sessionStorage.setItem('ecosort_session_active', 'true');
       } catch (e) {}
 
@@ -1952,7 +2018,7 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
       setIsRegistered(true);
       setShowAuthModal(false);
       try {
-        localStorage.setItem('ecosort_ghana_registered_v2', 'true');
+        localStorage.setItem(AUTH_SESSION_KEY, 'true');
         sessionStorage.setItem('ecosort_session_active', 'true');
       } catch (e) {}
       addToast({
@@ -1980,7 +2046,7 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
       setIsRegistered(true);
       setShowAuthModal(false);
       try {
-        localStorage.setItem('ecosort_ghana_registered_v2', 'true');
+        localStorage.setItem(AUTH_SESSION_KEY, 'true');
         sessionStorage.setItem('ecosort_session_active', 'true');
       } catch (e) {}
 
@@ -4526,16 +4592,26 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const resetToDefaults = () => {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(AUTH_SESSION_KEY);
+    localStorage.removeItem('ecosort_ghana_registered_v3');
+    localStorage.removeItem('ecosort_ghana_registered_v2');
+    sessionStorage.removeItem('ecosort_session_active');
+    try {
+      signOutUser();
+    } catch {}
     localDataCache.clearCache().catch(() => {});
     setLastCachedAt(null);
+    setFirebaseUser(null);
     setCurrentUser(INITIAL_USER);
-    setSubmissions(INITIAL_SUBMISSIONS);
-    setCollectionJobs(INITIAL_COLLECTION_JOBS);
+    setAllUsers([]);
+    setAdminAuditLogs([]);
+    setSubmissions([]);
+    setCollectionJobs([]);
     setRewardRules(INITIAL_REWARD_RULES);
     setRewards(INITIAL_REWARDS);
     setRedemptions([]);
-    setTransactions(INITIAL_POINT_TRANSACTIONS);
-    setCashWithdrawals(INITIAL_CASH_WITHDRAWALS);
+    setTransactions([]);
+    setCashWithdrawals([]);
     setLeaderboard(INITIAL_LEADERBOARD);
     setChallenge(INITIAL_CHALLENGE);
     setRecyclerInventory(INITIAL_RECYCLER_INVENTORY);
@@ -4547,12 +4623,14 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
     setForumPosts(INITIAL_FORUM_POSTS);
     setDistrictQuests(INITIAL_DISTRICT_QUESTS);
     setAmbassadors(INITIAL_AMBASSADORS);
+    setIsRegistered(false);
+    setIsAdminAuthenticated(false);
     setCurrentView('user-dashboard');
     
     const newNotif: AppNotification = {
       id: `notif-${Date.now()}`,
-      title: 'Demo Environment Reset 🔄',
-      message: 'State has been refreshed to clean Ghana pilot baseline data.',
+      title: 'State Reset Complete 🔄',
+      message: 'All registered members and temporary data cleared. Ready for fresh registration.',
       type: 'INFO',
       timestamp: 'Just now',
       read: false

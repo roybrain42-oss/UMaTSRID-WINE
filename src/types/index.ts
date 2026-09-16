@@ -43,7 +43,7 @@ export interface UserProfile {
   memberCount?: number;
   contactPerson?: string;
   leaderboardOptIn?: boolean;
-  avatar: string;
+  avatar?: string;
   organization?: string;
   location: string;
   community?: string;

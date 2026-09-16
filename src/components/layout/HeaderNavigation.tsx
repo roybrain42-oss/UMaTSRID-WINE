@@ -276,13 +276,11 @@ export const HeaderNavigation: React.FC = () => {
               <div className="relative">
                 <button
                   onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 text-xs font-semibold text-slate-200 transition-all shadow-xs"
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 text-xs font-semibold text-slate-200 transition-all shadow-xs cursor-pointer"
                 >
-                  <img 
-                    src={currentUser.avatar} 
-                    alt={currentUser.name} 
-                    className="w-6 h-6 rounded-lg object-cover border border-slate-600" 
-                  />
+                  <div className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                    <User className="w-3.5 h-3.5" />
+                  </div>
                   <div className="hidden sm:flex flex-col text-left">
                     <span className="truncate max-w-[100px] text-white text-[11px] font-bold leading-tight">
                       {currentUser.name.split(' ')[0]}
@@ -300,11 +298,9 @@ export const HeaderNavigation: React.FC = () => {
                     {/* User Profile Card Header */}
                     <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700/60">
                       <div className="flex items-start gap-2.5">
-                        <img 
-                          src={currentUser.avatar} 
-                          alt={currentUser.name} 
-                          className="w-10 h-10 rounded-xl object-cover border border-slate-600 shrink-0" 
-                        />
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                          <User className="w-5 h-5" />
+                        </div>
                         <div className="min-w-0 flex-1">
                           <span className="font-bold text-xs text-white block truncate">{currentUser.name}</span>
                           <div className="flex items-center gap-1">

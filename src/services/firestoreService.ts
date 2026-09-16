@@ -346,9 +346,11 @@ export const firestoreService = {
         }
       }
 
-      const userSnap = await getDoc(doc(db, 'users', initialUser.id));
-      if (!userSnap.exists()) {
-        await this.saveUserProfile(initialUser);
+      if (initialUser && initialUser.id) {
+        const userSnap = await getDoc(doc(db, 'users', initialUser.id));
+        if (!userSnap.exists()) {
+          await this.saveUserProfile(initialUser);
+        }
       }
     } catch (err) {
       console.warn('[Firestore] Initial cloud seed note:', err);

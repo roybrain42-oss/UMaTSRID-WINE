@@ -76,7 +76,6 @@ export const ShareImpactModal: React.FC<ShareImpactModalProps> = ({
 
   const stats: ShareImpactStats = {
     userName: currentUser.name,
-    avatarUrl: currentUser.avatar,
     rankTitle: currentUser.rankTitle,
     community: currentUser.community || currentUser.location || 'Accra, Ghana',
     totalWasteKg: totalWaste,

@@ -21,7 +21,8 @@ import {
   ExternalLink,
   Coins,
   MapPin,
-  Filter
+  Filter,
+  User
 } from 'lucide-react';
 import { useEcoSort } from '../../context/EcoSortContext';
 import { CommunityForumPost, ForumPostCategory } from '../../types/community';
@@ -254,11 +255,9 @@ export const CommunityForumTab: React.FC = () => {
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <img
-                      src={post.authorAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
-                      alt={post.authorName}
-                      className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700"
-                    />
+                    <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 shrink-0">
+                      <User className="w-5 h-5" />
+                    </div>
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">

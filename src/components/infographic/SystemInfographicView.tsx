@@ -25,7 +25,8 @@ import {
   Leaf,
   Lock,
   AlertTriangle,
-  UserCheck
+  UserCheck,
+  User
 } from 'lucide-react';
 import { useEcoSort, AppView } from '../../context/EcoSortContext';
 
@@ -75,7 +76,9 @@ export const SystemInfographicView: React.FC = () => {
             {/* Current Persona Card */}
             <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 max-w-md mx-auto flex items-center justify-between text-left">
               <div className="flex items-center gap-3">
-                <img src={currentUser.avatar} alt={currentUser.name} className="w-11 h-11 rounded-xl object-cover border border-slate-700" />
+                <div className="w-11 h-11 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-300 shrink-0">
+                  <User className="w-5 h-5" />
+                </div>
                 <div>
                   <span className="font-bold text-xs text-white block">{currentUser.name}</span>
                   <span className="text-[11px] text-amber-400 font-mono block">Current Role: {currentUser.role}</span>

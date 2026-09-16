@@ -8,7 +8,8 @@ import {
   Sparkles,
   ShieldCheck,
   Award,
-  Clock
+  Clock,
+  User
 } from 'lucide-react';
 import { ForumComment } from '../../types/community';
 import { useEcoSort } from '../../context/EcoSortContext';
@@ -78,11 +79,9 @@ export const ForumCommentItem: React.FC<ForumCommentItemProps> = ({
         {/* Comment Author Header */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2.5">
-            <img
-              src={comment.authorAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
-              alt={comment.authorName}
-              className="w-7 h-7 rounded-full object-cover border border-slate-200 dark:border-slate-700"
-            />
+            <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 shrink-0">
+              <User className="w-3.5 h-3.5" />
+            </div>
             <div>
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-bold text-xs text-slate-900 dark:text-white">

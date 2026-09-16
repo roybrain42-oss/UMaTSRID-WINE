@@ -28,15 +28,6 @@ import { useEcoSort } from '../../context/EcoSortContext';
 import { LanguageSwitcher } from '../layout/LanguageSwitcher';
 import { EntityType } from '../../types';
 
-const GHANA_AVATARS = [
-  { id: 'av-1', name: 'Bright (UG Student)', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250' },
-  { id: 'av-2', name: 'Ama (KNUST Eco Club)', url: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&q=80&w=250' },
-  { id: 'av-3', name: 'Kwame (Fleet Agent)', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250' },
-  { id: 'av-4', name: 'Kofi (Logistics Pro)', url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=250' },
-  { id: 'av-5', name: 'UMaT SRID (EPA Admin)', url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=250' },
-  { id: 'av-6', name: 'Abena (Circular Ops)', url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=250' },
-];
-
 const GHANA_COMMUNITIES = [
   'University of Ghana (Legon Campus)',
   'KNUST Campus (Kumasi)',
@@ -82,7 +73,6 @@ export const EditProfileModal: React.FC = () => {
   const [address, setAddress] = useState<string>(currentUser.address || '');
   const [organization, setOrganization] = useState<string>(currentUser.organization || '');
   const [ghanaCardNumber, setGhanaCardNumber] = useState<string>(currentUser.ghanaCardNumber || '');
-  const [avatar, setAvatar] = useState<string>(currentUser.avatar);
   const [requireBiometricForMoMo, setRequireBiometricForMoMo] = useState<boolean>(currentUser.requireBiometricForMoMo ?? true);
   const [momoBiometricPolicy, setMomoBiometricPolicy] = useState<'ALWAYS' | 'THRESHOLD_ONLY' | 'NEVER'>(
     currentUser.momoBiometricPolicy || (currentUser.requireBiometricForMoMo === false ? 'NEVER' : 'THRESHOLD_ONLY')
@@ -91,51 +81,11 @@ export const EditProfileModal: React.FC = () => {
     currentUser.momoBiometricThresholdGhs ?? 20
   );
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState<boolean>(false);
   const [isEnrollingBio, setIsEnrollingBio] = useState<boolean>(false);
   const [isTestingSensor, setIsTestingSensor] = useState<boolean>(false);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const isEnabled = isBiometricsEnrolled || !!currentUser?.biometricsEnabled;
   const isFace = biometricCapability?.biometricIconName === 'ScanFace' || currentUser?.biometricType === 'FACE_ID';
-
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      addToast({
-        title: 'Invalid File',
-        message: 'Please choose an image file (PNG, JPG, WEBP).',
-        type: 'warning'
-      });
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      addToast({
-        title: 'File Too Large',
-        message: 'Profile image size must be under 5MB.',
-        type: 'warning'
-      });
-      return;
-    }
-
-    setIsUploadingPhoto(true);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        setAvatar(dataUrl);
-      }
-      setIsUploadingPhoto(false);
-    };
-    reader.onerror = () => {
-      setIsUploadingPhoto(false);
-    };
-    reader.readAsDataURL(file);
-  };
 
   if (!showEditProfileModal) return null;
 
@@ -172,7 +122,6 @@ export const EditProfileModal: React.FC = () => {
         contactPerson: contactPerson.trim() || name.trim(),
         leaderboardOptIn,
         ghanaCardNumber: ghanaCardNumber.trim(),
-        avatar,
         ghanaTelecomNetwork: getNetwork(phone),
         requireBiometricForMoMo: momoBiometricPolicy !== 'NEVER',
         momoBiometricPolicy,
@@ -212,82 +161,6 @@ export const EditProfileModal: React.FC = () => {
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           
-          {/* Avatar Upload & Chooser */}
-          <div className="space-y-3">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
-              Profile Photo & Avatar
-            </label>
-            
-            <div className="bg-slate-800/80 rounded-2xl p-3.5 border border-slate-700 flex flex-col sm:flex-row items-center gap-3.5">
-              <img 
-                src={avatar} 
-                alt={name} 
-                className="w-16 h-16 rounded-2xl object-cover border-2 border-blue-500 shadow-md shadow-blue-500/20 shrink-0"
-              />
-
-              <div className="flex-1 space-y-2 text-center sm:text-left">
-                <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
-                  <input 
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handlePhotoUpload}
-                    accept="image/png, image/jpeg, image/jpg, image/webp"
-                    className="hidden"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploadingPhoto}
-                    className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
-                  >
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>{isUploadingPhoto ? 'Uploading...' : 'Upload New Photo'}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (fileInputRef.current) {
-                        fileInputRef.current.setAttribute('capture', 'user');
-                        fileInputRef.current.click();
-                      }
-                    }}
-                    className="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold border border-slate-600 flex items-center gap-1.5 transition-all cursor-pointer"
-                  >
-                    <Camera className="w-3.5 h-3.5 text-slate-300" />
-                    <span>Camera</span>
-                  </button>
-                </div>
-                <p className="text-[10px] text-slate-400">JPG, PNG, or WEBP up to 5MB.</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider shrink-0">Presets:</span>
-              {GHANA_AVATARS.map((av) => (
-                <button
-                  key={av.id}
-                  type="button"
-                  onClick={() => setAvatar(av.url)}
-                  className={`relative rounded-xl p-0.5 shrink-0 border-2 transition-all cursor-pointer ${
-                    avatar === av.url 
-                      ? 'border-blue-500 bg-blue-500/20 scale-105' 
-                      : 'border-slate-700 opacity-60 hover:opacity-100'
-                  }`}
-                  title={av.name}
-                >
-                  <img src={av.url} alt={av.name} className="w-9 h-9 rounded-lg object-cover" />
-                  {avatar === av.url && (
-                    <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-blue-500 text-white flex items-center justify-center">
-                      <CheckCircle2 className="w-2 h-2" />
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Entity Type / Registration Category */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">

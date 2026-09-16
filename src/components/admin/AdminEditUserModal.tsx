@@ -92,11 +92,9 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ user, is
         {/* Header */}
         <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-6 text-white flex items-center justify-between border-b border-slate-700">
           <div className="flex items-center gap-3">
-            <img 
-              src={user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'} 
-              alt={user.name} 
-              className="w-12 h-12 rounded-2xl object-cover border-2 border-emerald-400"
-            />
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-emerald-400 shrink-0">
+              <User className="w-6 h-6" />
+            </div>
             <div>
               <h2 className="text-lg font-black tracking-tight">Edit Profile: {user.name}</h2>
               <p className="text-xs text-slate-300">

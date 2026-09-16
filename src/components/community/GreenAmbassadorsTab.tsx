@@ -11,7 +11,8 @@ import {
   TrendingUp,
   CheckCircle2,
   Send,
-  Zap
+  Zap,
+  User
 } from 'lucide-react';
 import { useEcoSort } from '../../context/EcoSortContext';
 
@@ -76,11 +77,9 @@ export const GreenAmbassadorsTab: React.FC = () => {
                 {/* Header Profile Info */}
                 <div className="flex items-start gap-4">
                   <div className="relative">
-                    <img
-                      src={amb.avatar}
-                      alt={amb.name}
-                      className="w-16 h-16 rounded-2xl object-cover border-2 border-amber-400 shadow-md"
-                    />
+                    <div className="w-16 h-16 rounded-2xl bg-amber-500/15 dark:bg-amber-500/20 border-2 border-amber-400 flex items-center justify-center text-amber-500 shadow-sm shrink-0">
+                      <User className="w-8 h-8" />
+                    </div>
                     <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-black text-[11px] shadow-xs">
                       ★
                     </div>

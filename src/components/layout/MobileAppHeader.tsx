@@ -130,17 +130,13 @@ export const MobileAppHeader: React.FC = () => {
             )}
           </button>
 
-          {/* User Avatar */}
+          {/* User Profile Button */}
           <button
             onClick={() => setProfileOpen(!profileOpen)}
-            className="relative"
+            className="relative p-2 rounded-xl bg-slate-800 text-slate-200 hover:text-white hover:bg-slate-700 transition-colors border border-slate-700 cursor-pointer"
             title="User menu"
           >
-            <img 
-              src={currentUser.avatar} 
-              alt={currentUser.name} 
-              className="w-8 h-8 rounded-xl object-cover border-2 border-slate-700 hover:border-blue-500 transition-colors"
-            />
+            <User className="w-4 h-4 text-emerald-400" />
           </button>
 
         </div>
@@ -153,13 +149,15 @@ export const MobileAppHeader: React.FC = () => {
           <div className="bg-[#0F172A] border border-slate-800 rounded-3xl p-5 max-w-sm w-full shadow-2xl space-y-4 animate-in zoom-in-95">
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">User Profile</span>
-              <button onClick={() => setProfileOpen(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setProfileOpen(false)} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="flex items-center gap-3 bg-slate-900/80 p-3 rounded-2xl border border-slate-800">
-              <img src={currentUser.avatar} alt={currentUser.name} className="w-12 h-12 rounded-xl object-cover" />
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold shrink-0">
+                <User className="w-6 h-6" />
+              </div>
               <div className="min-w-0 flex-1">
                 <span className="font-bold text-sm text-white block truncate">{currentUser.name}</span>
                 <div className="flex items-center gap-1.5">

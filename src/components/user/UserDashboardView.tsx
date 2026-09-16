@@ -87,11 +87,9 @@ export const UserDashboardView: React.FC = () => {
       {/* Clean User Profile Header */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
         <div className="flex items-center gap-4">
-          <img 
-            src={currentUser.avatar} 
-            alt={currentUser.name} 
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-slate-100 dark:border-slate-800 shadow-xs"
-          />
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-emerald-500/15 dark:bg-emerald-500/20 border-2 border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 shadow-xs">
+            <User className="w-7 h-7 sm:w-8 sm:h-8" />
+          </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">

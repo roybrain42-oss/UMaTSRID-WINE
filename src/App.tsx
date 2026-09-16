@@ -60,7 +60,7 @@ const AppContent: React.FC = () => {
       <DeviceFrameSimulator>
         <div className="min-h-screen bg-[#0F172A] text-slate-100 antialiased font-sans flex flex-col justify-between relative">
           <ToastContainer />
-          <AuthScreen />
+          <AuthScreen initialTab="SIGN_UP" />
           <BiometricPromptModal
             isOpen={showBiometricModal}
             options={biometricPromptOptions}
