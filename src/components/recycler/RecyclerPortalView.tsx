@@ -13,14 +13,16 @@ import {
   FileCheck,
   Scale,
   Sparkles,
-  Award
+  Award,
+  LogOut,
+  LogIn
 } from 'lucide-react';
 import { useEcoSort } from '../../context/EcoSortContext';
 import { WasteCategory } from '../../types';
 import { EcosystemRoleSwitcher } from '../dashboard/EcosystemRoleSwitcher';
 
 export const RecyclerPortalView: React.FC = () => {
-  const { recyclerInventory, recyclerOrders, addRecyclerOrder, currentUser } = useEcoSort();
+  const { recyclerInventory, recyclerOrders, addRecyclerOrder, currentUser, logoutUser } = useEcoSort();
 
   const [selectedCategory, setSelectedCategory] = useState<WasteCategory>('PLASTIC');
   const [orderKg, setOrderKg] = useState<number>(500);
@@ -57,10 +59,30 @@ export const RecyclerPortalView: React.FC = () => {
             </p>
           </div>
 
-          <div className="bg-slate-900/90 border border-purple-500/40 p-4 rounded-2xl">
-            <span className="text-[10px] text-purple-300 uppercase font-bold block">Company Account</span>
-            <span className="text-sm font-bold text-white block">{currentUser.organization || 'Accra Circular Plastics Ltd'}</span>
-            <span className="text-[10px] text-slate-400">Verified Industrial Offtaker • Tema Free Zones</span>
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="bg-slate-900/90 border border-purple-500/40 p-4 rounded-2xl">
+              <span className="text-[10px] text-purple-300 uppercase font-bold block">Company Account</span>
+              <span className="text-sm font-bold text-white block">{currentUser.organization || 'Accra Circular Plastics Ltd'}</span>
+              <span className="text-[10px] text-slate-400">Verified Industrial Offtaker • Tema Free Zones</span>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <button
+                onClick={() => logoutUser('SIGN_IN')}
+                className="px-3.5 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/40 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer active:scale-95"
+                title="Switch account or log in"
+              >
+                <LogIn className="w-3.5 h-3.5 text-blue-400" />
+                <span>Log In</span>
+              </button>
+              <button
+                onClick={() => logoutUser('SIGN_IN')}
+                className="px-3.5 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer active:scale-95"
+                title="Log out and return to first page"
+              >
+                <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                <span>Log Out</span>
+              </button>
+            </div>
           </div>
         </div>
 

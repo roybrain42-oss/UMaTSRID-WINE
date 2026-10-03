@@ -43,6 +43,7 @@ const AppContent: React.FC = () => {
     currentUser, 
     setCurrentView,
     isRegistered,
+    authInitialTab,
     isAdminAuthenticated,
     showShareImpactModal,
     closeShareImpactModal,
@@ -60,7 +61,7 @@ const AppContent: React.FC = () => {
       <DeviceFrameSimulator>
         <div className="min-h-screen bg-[#0F172A] text-slate-100 antialiased font-sans flex flex-col justify-between relative">
           <ToastContainer />
-          <AuthScreen initialTab="SIGN_UP" />
+          <AuthScreen initialTab={authInitialTab || 'SIGN_IN'} />
           <BiometricPromptModal
             isOpen={showBiometricModal}
             options={biometricPromptOptions}

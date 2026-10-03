@@ -259,7 +259,9 @@ interface EcoSortContextType {
     ghanaTelecomNetwork?: 'MTN' | 'Telecel' | 'AT' | 'Other';
   }) => UserProfile;
   updateUserProfile: (updates: Partial<UserProfile>) => void;
-  logoutUser: () => void;
+  logoutUser: (targetTab?: 'SIGN_IN' | 'SIGN_UP') => void;
+  authInitialTab: 'SIGN_IN' | 'SIGN_UP';
+  setAuthInitialTab: (tab: 'SIGN_IN' | 'SIGN_UP') => void;
   loginWithDemoUser: (roleName: UserRole) => void;
   loginAsAdminWithCredentials: (username: string, password: string) => { success: boolean; error?: string };
   loginWithIdentifier: (identifier: string, passwordOrPin?: string) => { success: boolean; message?: string; user?: UserProfile };
@@ -513,6 +515,7 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   });
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+  const [authInitialTab, setAuthInitialTab] = useState<'SIGN_IN' | 'SIGN_UP'>('SIGN_IN');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [showAdminAuthModal, setShowAdminAuthModal] = useState<boolean>(false);
   
@@ -1900,7 +1903,7 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
-  const logoutUser = async () => {
+  const logoutUser = async (targetTab: 'SIGN_IN' | 'SIGN_UP' = 'SIGN_IN') => {
     try {
       await signOutUser();
     } catch (err) {
@@ -1911,16 +1914,18 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
     setCurrentUser(INITIAL_USER);
     setIsRegistered(false);
     setShowAuthModal(false);
+    setShowAdminAuthModal(false);
+    setAuthInitialTab(targetTab);
     setCurrentView('user-dashboard');
     try {
       localStorage.removeItem(AUTH_SESSION_KEY);
       sessionStorage.removeItem('ecosort_session_active');
     } catch (e) {}
     addToast({
-      title: 'Signed Out',
-      message: 'You have been logged out. Please sign in or register to continue.',
+      title: 'Logged Out 🚪',
+      message: 'You have been logged out to the authentication screen. Sign in or create an account anytime.',
       type: 'info',
-      duration: 3000
+      duration: 3500
     });
   };
 
@@ -4721,6 +4726,8 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
         registerUser,
         updateUserProfile,
         logoutUser,
+        authInitialTab,
+        setAuthInitialTab,
         loginWithDemoUser,
         loginAsAdminWithCredentials,
         loginWithIdentifier,

@@ -22,7 +22,9 @@ import {
   Navigation,
   Route,
   Wrench,
-  Smartphone
+  Smartphone,
+  LogOut,
+  LogIn
 } from 'lucide-react';
 import { useEcoSort } from '../../context/EcoSortContext';
 import { WasteCategory } from '../../types';
@@ -52,6 +54,7 @@ export const AdminDashboardView: React.FC = () => {
     smsLogs,
     addToast,
     resetToDefaults,
+    logoutUser,
     setCurrentView,
     triggerCelebration 
   } = useEcoSort();
@@ -123,6 +126,20 @@ export const AdminDashboardView: React.FC = () => {
               className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <Download className="w-4 h-4" /> Export CSV Report
+            </button>
+            <button
+              onClick={() => logoutUser('SIGN_IN')}
+              className="px-3.5 py-2.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 font-bold text-xs border border-blue-500/40 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+              title="Switch user account or log in"
+            >
+              <LogIn className="w-4 h-4 text-blue-400" /> Log In
+            </button>
+            <button
+              onClick={() => logoutUser('SIGN_IN')}
+              className="px-3.5 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-bold text-xs border border-rose-500/40 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+              title="Log out and return to the first page"
+            >
+              <LogOut className="w-4 h-4 text-rose-400" /> Log Out
             </button>
             <button
               onClick={resetToDefaults}

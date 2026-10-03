@@ -18,7 +18,9 @@ import {
   Camera,
   Coins,
   Users,
-  Cpu
+  Cpu,
+  LogOut,
+  LogIn
 } from 'lucide-react';
 import { useEcoSort, AppView } from '../../context/EcoSortContext';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -33,6 +35,7 @@ export const MobileBottomNavigation: React.FC = () => {
     currentUser,
     isAdminAuthenticated,
     openAdminAuthModal,
+    logoutUser,
     ecoPointsPerGhs,
     t
   } = useEcoSort();
@@ -299,14 +302,39 @@ export const MobileBottomNavigation: React.FC = () => {
               ))}
             </div>
 
+            {/* Account & Session Controls */}
+            <div className="pt-2 border-t border-slate-800 grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  setDrawerOpen(false);
+                  logoutUser('SIGN_IN');
+                }}
+                className="py-3 px-3 rounded-2xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-300 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <LogIn className="w-4 h-4 text-blue-400" />
+                <span>Log In</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setDrawerOpen(false);
+                  logoutUser('SIGN_IN');
+                }}
+                className="py-3 px-3 rounded-2xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 hover:text-rose-200 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <LogOut className="w-4 h-4 text-rose-400" />
+                <span>Log Out</span>
+              </button>
+            </div>
+
             {/* APK Shortcut & PWA Install Banner */}
-            <div className="pt-2 border-t border-slate-800">
+            <div>
               <button
                 onClick={() => {
                   setDrawerOpen(false);
                   setShowApkModal(true);
                 }}
-                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2"
+                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Smartphone className="w-4 h-4" />
                 <span>Install EcoSort Android APK / PWA</span>

@@ -7,6 +7,7 @@ import {
   Settings, 
   RotateCcw, 
   LogOut, 
+  LogIn,
   UserPlus, 
   ChevronDown,
   X,
@@ -130,6 +131,26 @@ export const MobileAppHeader: React.FC = () => {
             )}
           </button>
 
+          {/* Visible Log In Button */}
+          <button
+            onClick={() => logoutUser('SIGN_IN')}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-300 font-bold text-[11px] transition-colors cursor-pointer active:scale-95"
+            title="Switch account or log in"
+          >
+            <LogIn className="w-3.5 h-3.5 text-blue-400" />
+            <span className="hidden xs:inline">Log In</span>
+          </button>
+
+          {/* Visible Log Out Button */}
+          <button
+            onClick={() => logoutUser('SIGN_IN')}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 hover:text-rose-200 font-bold text-[11px] transition-colors cursor-pointer active:scale-95"
+            title="Log Out to first page"
+          >
+            <LogOut className="w-3.5 h-3.5 text-rose-400" />
+            <span>Log Out</span>
+          </button>
+
           {/* User Profile Button */}
           <button
             onClick={() => setProfileOpen(!profileOpen)}
@@ -236,25 +257,35 @@ export const MobileAppHeader: React.FC = () => {
               </div>
             </div>
 
-            <div className="pt-2 border-t border-slate-800 flex justify-between text-[11px]">
+            <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-2 text-[11px]">
+              <button
+                onClick={() => {
+                  setProfileOpen(false);
+                  logoutUser('SIGN_IN');
+                }}
+                className="text-blue-400 hover:text-blue-300 flex items-center gap-1 font-bold cursor-pointer"
+              >
+                <LogIn className="w-3.5 h-3.5" /> Log In
+              </button>
+
               <button
                 onClick={() => {
                   resetToDefaults();
                   setProfileOpen(false);
                 }}
-                className="text-slate-400 hover:text-white flex items-center gap-1"
+                className="text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" /> Reset Demo
               </button>
 
               <button
                 onClick={() => {
-                  logoutUser();
                   setProfileOpen(false);
+                  logoutUser('SIGN_IN');
                 }}
-                className="text-rose-400 hover:text-rose-300 flex items-center gap-1 font-bold"
+                className="text-rose-400 hover:text-rose-300 flex items-center gap-1 font-bold cursor-pointer"
               >
-                <LogOut className="w-3.5 h-3.5" /> Sign Out
+                <LogOut className="w-3.5 h-3.5" /> Log Out
               </button>
             </div>
           </div>

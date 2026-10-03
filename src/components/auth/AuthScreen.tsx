@@ -84,8 +84,14 @@ export const AuthScreen: React.FC<{ initialTab?: 'SIGN_IN' | 'SIGN_UP' }> = ({ i
     biometricCapability
   } = useEcoSort();
 
-  // Primary mode defaults to 'SIGN_UP' so the first screen is the Sign Up page
+  // Primary mode defaults to initialTab
   const [primaryTab, setPrimaryTab] = useState<'SIGN_IN' | 'SIGN_UP'>(initialTab);
+
+  React.useEffect(() => {
+    if (initialTab) {
+      setPrimaryTab(initialTab);
+    }
+  }, [initialTab]);
 
   // Sign in sub-method
   const [signInMethod, setSignInMethod] = useState<'PHONE_EMAIL' | 'GOOGLE' | 'PASSKEY' | 'ADMIN'>('PHONE_EMAIL');

@@ -27,7 +27,9 @@ import {
   Calendar,
   Camera,
   ShieldCheck,
-  ArrowRight
+  ArrowRight,
+  LogOut,
+  LogIn
 } from 'lucide-react';
 import { useEcoSort } from '../../context/EcoSortContext';
 import { PersonalizedWeeklySummary } from './PersonalizedWeeklySummary';
@@ -47,6 +49,7 @@ export const UserDashboardView: React.FC = () => {
     setShowCashOutModal,
     openShareImpactModal,
     openInstantScanModal,
+    logoutUser,
     ecoPointsPerGhs,
     t,
     currentLanguageInfo,
@@ -123,6 +126,22 @@ export const UserDashboardView: React.FC = () => {
                 <Settings className="w-3 h-3" />
                 Edit Profile
               </button>
+              <button
+                onClick={() => logoutUser('SIGN_IN')}
+                className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-semibold cursor-pointer"
+                title="Switch account or log in"
+              >
+                <LogIn className="w-3 h-3" />
+                Log In
+              </button>
+              <button
+                onClick={() => logoutUser('SIGN_IN')}
+                className="text-[11px] text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-1 font-semibold cursor-pointer"
+                title="Log out to first page"
+              >
+                <LogOut className="w-3 h-3" />
+                Log Out
+              </button>
             </div>
           </div>
         </div>
@@ -159,6 +178,16 @@ export const UserDashboardView: React.FC = () => {
             title="Share Impact Card"
           >
             <Share2 className="w-4 h-4" />
+          </button>
+
+          {/* Dedicated Visible Log Out Button */}
+          <button
+            onClick={() => logoutUser('SIGN_IN')}
+            className="flex-1 sm:flex-none px-3.5 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 font-bold text-xs shadow-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+            title="Log out and return to first page"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Log Out</span>
           </button>
         </div>
       </div>

@@ -14,7 +14,9 @@ import {
   Layers,
   Sparkles,
   Navigation,
-  Radio
+  Radio,
+  LogOut,
+  LogIn
 } from 'lucide-react';
 import { useEcoSort } from '../../context/EcoSortContext';
 import { CollectionJob, WasteClassificationResult } from '../../types';
@@ -31,6 +33,7 @@ export const CollectorAppView: React.FC = () => {
     verifyAndCollectJob, 
     currentUser, 
     rewardRules,
+    logoutUser,
     addToast
   } = useEcoSort();
 
@@ -115,7 +118,7 @@ export const CollectorAppView: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-2xl text-center">
               <span className="text-[10px] text-slate-400 block uppercase">Pending Pickups</span>
               <span className="text-xl font-bold text-amber-400">{newJobs.length + acceptedJobs.length}</span>
@@ -123,6 +126,24 @@ export const CollectorAppView: React.FC = () => {
             <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-2xl text-center">
               <span className="text-[10px] text-slate-400 block uppercase">Completed</span>
               <span className="text-xl font-bold text-emerald-400">{completedJobs.length}</span>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <button
+                onClick={() => logoutUser('SIGN_IN')}
+                className="px-3 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/40 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer active:scale-95"
+                title="Switch account or log in"
+              >
+                <LogIn className="w-3.5 h-3.5 text-blue-400" />
+                <span>Log In</span>
+              </button>
+              <button
+                onClick={() => logoutUser('SIGN_IN')}
+                className="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer active:scale-95"
+                title="Log out and return to first page"
+              >
+                <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                <span>Log Out</span>
+              </button>
             </div>
           </div>
         </div>
