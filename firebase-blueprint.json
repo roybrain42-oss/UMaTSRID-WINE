@@ -1,97 +1,123 @@
 {
   "entities": {
     "UserProfile": {
-      "collection": "users",
-      "fields": {
-        "id": { "type": "string", "description": "Unique user identifier" },
-        "name": { "type": "string", "description": "Full name of the user" },
-        "email": { "type": "string", "description": "Email address" },
-        "phone": { "type": "string", "description": "Phone number / WhatsApp" },
-        "role": { "type": "string", "description": "Role: CITIZEN, AGENT, RECYCLER, or ADMIN" },
-        "entityType": { "type": "string", "description": "INDIVIDUAL, SCHOOL, COMMUNITY, or ORGANIZATION" },
-        "institutionName": { "type": "string", "description": "Name of school or organization if applicable" },
-        "location": { "type": "string", "description": "City or locality" },
-        "community": { "type": "string", "description": "Neighborhood / District in Ghana" },
-        "ecoPoints": { "type": "number", "description": "Current active EcoPoints balance" },
-        "totalWasteKg": { "type": "number", "description": "Total kilograms of recyclables diverted" },
-        "co2SavedKg": { "type": "number", "description": "Total kilograms of CO2 avoided" },
-        "verifiedCollections": { "type": "number", "description": "Total number of verified collections" },
-        "momoNumber": { "type": "string", "description": "Registered MTN/Telecel/AT MoMo phone number" },
-        "momoNetwork": { "type": "string", "description": "MTN, TELECEL, or AT" },
-        "avatar": { "type": "string", "description": "Avatar image URL" },
-        "biometricEnrolled": { "type": "boolean", "description": "Whether WebAuthn passkey is enrolled" },
-        "createdAt": { "type": "string", "description": "Account registration timestamp" },
-        "lastActiveAt": { "type": "string", "description": "Last activity timestamp" }
+      "title": "UserProfile",
+      "description": "User account and profile information across citizen, collector, recycler, and admin roles.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique user or Firebase Auth UID" },
+        "name": { "type": "string", "description": "Full legal or display name" },
+        "email": { "type": "string", "format": "email", "description": "Email address" },
+        "phone": { "type": "string", "description": "Ghana phone number" },
+        "role": { "type": "string", "enum": ["USER", "COMMUNITY_ADMIN", "COLLECTION_AGENT", "RECYCLER", "ADMIN"], "description": "Application permission role" },
+        "entityType": { "type": "string", "enum": ["INDIVIDUAL", "SCHOOL", "COMMUNITY", "ORGANIZATION"], "description": "Entity classification" },
+        "institutionName": { "type": "string", "description": "Associated institution or school name" },
+        "location": { "type": "string", "description": "City or operational region in Ghana" },
+        "community": { "type": "string", "description": "Local neighborhood or campus" },
+        "ecoPoints": { "type": "number", "description": "Active reward point balance" },
+        "totalWasteKg": { "type": "number", "description": "Cumulative waste diverted in kg" },
+        "co2SavedKg": { "type": "number", "description": "Calculated carbon emissions saved in kg" },
+        "verifiedCollections": { "type": "number", "description": "Count of scale-verified pickups" },
+        "avatar": { "type": "string", "description": "Profile picture URL" },
+        "authProvider": { "type": "string", "description": "Authentication provider: password, google, or biometric" },
+        "googleId": { "type": "string", "description": "Firebase Google Auth UID" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Account registration timestamp" }
       },
-      "rules": "Users can read and write their own profile; admins can read and manage all profiles."
+      "required": ["id", "name", "role", "ecoPoints"]
     },
     "WasteSubmission": {
-      "collection": "submissions",
-      "fields": {
-        "id": { "type": "string", "description": "Submission ID" },
-        "userId": { "type": "string", "description": "User ID who submitted" },
-        "userName": { "type": "string", "description": "User name" },
-        "category": { "type": "string", "description": "Waste category (PLASTIC, METAL, PAPER, GLASS, ORGANIC, EWASTE)" },
-        "wasteType": { "type": "string", "description": "Detailed material description" },
-        "weightKg": { "type": "number", "description": "Reported weight in kilograms" },
-        "location": { "type": "string", "description": "Pickup or drop-off location description" },
-        "collectionType": { "type": "string", "description": "PICKUP or DROP_OFF" },
-        "photoUrl": { "type": "string", "description": "Waste verification photo URL" },
-        "status": { "type": "string", "description": "PENDING, VERIFIED, REJECTED, or COMPLETED" },
+      "title": "WasteSubmission",
+      "description": "Citizen recyclable waste deposit and collection requests.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique submission identifier" },
+        "userId": { "type": "string", "description": "Submitting citizen user ID" },
+        "userName": { "type": "string", "description": "Citizen name" },
+        "imageUrl": { "type": "string", "description": "Photo of sorted recyclables" },
+        "userWeightEstimateKg": { "type": "number", "description": "User estimated weight" },
+        "actualWeightKg": { "type": "number", "description": "Agent verified weight in kg" },
         "pointsAwarded": { "type": "number", "description": "EcoPoints awarded" },
-        "cashEquivalentGhs": { "type": "number", "description": "MoMo cash equivalent value in Ghana Cedis" },
-        "notes": { "type": "string", "description": "Special sorting or handling notes" },
-        "createdAt": { "type": "string", "description": "Creation timestamp" }
+        "status": { "type": "string", "enum": ["REQUESTED", "ACCEPTED", "POINTS_AWARDED", "CANCELLED"], "description": "Lifecycle state" },
+        "pickupAddress": { "type": "string", "description": "Pickup street or GPS description" },
+        "community": { "type": "string", "description": "Community or district" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Submission timestamp" }
       },
-      "rules": "Citizens can create and read their submissions; collectors/admins can read and verify submissions."
+      "required": ["id", "userId", "status", "createdAt"]
     },
     "CollectionJob": {
-      "collection": "collection_jobs",
-      "fields": {
-        "id": { "type": "string", "description": "Job ID" },
-        "submissionId": { "type": "string", "description": "Linked submission ID" },
-        "citizenName": { "type": "string", "description": "Citizen full name" },
-        "citizenPhone": { "type": "string", "description": "Citizen contact phone" },
-        "location": { "type": "string", "description": "Pickup GPS/location" },
-        "wasteType": { "type": "string", "description": "Waste category or material" },
-        "estimatedKg": { "type": "number", "description": "Estimated weight in kg" },
-        "actualKg": { "type": "number", "description": "Verified actual weight in kg" },
-        "status": { "type": "string", "description": "AVAILABLE, ASSIGNED, IN_TRANSIT, COMPLETED, or CANCELLED" },
-        "collectorId": { "type": "string", "description": "Assigned collector agent ID" },
-        "collectorName": { "type": "string", "description": "Assigned collector name" },
-        "scheduledTime": { "type": "string", "description": "Scheduled pickup time" },
-        "completedAt": { "type": "string", "description": "Completion timestamp" },
-        "createdAt": { "type": "string", "description": "Creation timestamp" }
+      "title": "CollectionJob",
+      "description": "Logistics and dispatch job for fleet collection agents.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Job identifier" },
+        "submissionId": { "type": "string", "description": "Linked waste submission ID" },
+        "userId": { "type": "string", "description": "Citizen user ID" },
+        "userName": { "type": "string", "description": "Citizen name" },
+        "wasteCategory": { "type": "string", "description": "Waste category (PLASTIC, METAL, PAPER, etc.)" },
+        "material": { "type": "string", "description": "Specific material description" },
+        "estimatedWeightKg": { "type": "number", "description": "Estimated weight in kg" },
+        "actualWeightKg": { "type": "number", "description": "Agent digital scale verified weight" },
+        "assignedAgentId": { "type": "string", "description": "Assigned collection agent UID" },
+        "agentName": { "type": "string", "description": "Assigned agent name" },
+        "status": { "type": "string", "enum": ["REQUESTED", "ACCEPTED", "POINTS_AWARDED", "CANCELLED"], "description": "Status of job" },
+        "location": { "type": "string", "description": "Pickup location" },
+        "community": { "type": "string", "description": "Community" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
       },
-      "rules": "Collectors and admins can view and update collection jobs; citizens can track their own jobs."
+      "required": ["id", "submissionId", "status", "createdAt"]
     },
     "PointTransaction": {
-      "collection": "point_transactions",
-      "fields": {
+      "title": "PointTransaction",
+      "description": "Double-entry financial and points ledger record.",
+      "type": "object",
+      "properties": {
         "id": { "type": "string", "description": "Transaction ID" },
-        "userId": { "type": "string", "description": "Target user ID" },
-        "amount": { "type": "number", "description": "Points credited (+) or debited (-)" },
-        "type": { "type": "string", "description": "EARNED, REDEEMED, WITHDRAWAL, or BONUS" },
-        "source": { "type": "string", "description": "SUBMISSION, MARKETPLACE, MOMO_CASHOUT, or BOT_SORTING" },
-        "description": { "type": "string", "description": "Transaction details" },
-        "timestamp": { "type": "string", "description": "Timestamp string" }
+        "userId": { "type": "string", "description": "Target account ID" },
+        "type": { "type": "string", "description": "Transaction type" },
+        "amount": { "type": "number", "description": "EcoPoints delta" },
+        "balanceAfter": { "type": "number", "description": "Balance after transaction" },
+        "description": { "type": "string", "description": "Human readable description" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Ledger entry timestamp" }
       },
-      "rules": "Users can read their own transaction history."
+      "required": ["id", "userId", "amount", "createdAt"]
     },
     "CashWithdrawal": {
-      "collection": "cash_withdrawals",
-      "fields": {
-        "id": { "type": "string", "description": "Withdrawal request ID" },
-        "userId": { "type": "string", "description": "User ID requesting cashout" },
-        "amountGhs": { "type": "number", "description": "Amount in Ghana Cedis (GH₵)" },
-        "ecoPointsDeducted": { "type": "number", "description": "EcoPoints deducted from balance" },
-        "momoNumber": { "type": "string", "description": "Mobile Money phone number" },
-        "momoNetwork": { "type": "string", "description": "MTN, TELECEL, or AT" },
-        "status": { "type": "string", "description": "PENDING, APPROVED, or COMPLETED" },
-        "referenceId": { "type": "string", "description": "Bank / MoMo gateway payout reference" },
-        "requestedAt": { "type": "string", "description": "Request timestamp" }
+      "title": "CashWithdrawal",
+      "description": "Mobile Money cash out withdrawal record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Withdrawal identifier" },
+        "userId": { "type": "string", "description": "Requesting citizen ID" },
+        "amountGhs": { "type": "number", "description": "Ghana Cedi payout amount" },
+        "ecoPointsDeducted": { "type": "number", "description": "Points debited" },
+        "momoNumber": { "type": "string", "description": "Recipient MoMo number" },
+        "network": { "type": "string", "description": "MTN, Telecel, or AT" },
+        "status": { "type": "string", "enum": ["PENDING", "PROCESSING", "COMPLETED", "FAILED"], "description": "Payout status" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Request timestamp" }
       },
-      "rules": "Users can view and request their own withdrawals; admins can approve and settle."
+      "required": ["id", "userId", "amountGhs", "ecoPointsDeducted", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Public and private user profiles."
+    },
+    "/submissions/{submissionId}": {
+      "schema": "WasteSubmission",
+      "description": "Citizen waste submission records."
+    },
+    "/collection_jobs/{jobId}": {
+      "schema": "CollectionJob",
+      "description": "Fleet dispatch and collection routes."
+    },
+    "/point_transactions/{txId}": {
+      "schema": "PointTransaction",
+      "description": "Points ledger transactions."
+    },
+    "/cash_withdrawals/{withdrawalId}": {
+      "schema": "CashWithdrawal",
+      "description": "MoMo cash out redemption logs."
     }
   }
 }

@@ -74,6 +74,8 @@ const GoogleIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' })
 export const AuthScreen: React.FC<{ initialTab?: 'SIGN_IN' | 'SIGN_UP' }> = ({ initialTab = 'SIGN_UP' }) => {
   const { 
     registerUser, 
+    registerWithFirebaseEmail,
+    sendPasswordReset,
     loginWithDemoUser,
     loginWithGoogle,
     isGoogleAuthLoading,
@@ -102,6 +104,12 @@ export const AuthScreen: React.FC<{ initialTab?: 'SIGN_IN' | 'SIGN_UP' }> = ({ i
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loginError, setLoginError] = useState<string>('');
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
+
+  // Registration Password state for Firebase Auth
+  const [regPassword, setRegPassword] = useState<string>('');
+  const [showRegPassword, setShowRegPassword] = useState<boolean>(false);
+  const [resetSentMessage, setResetSentMessage] = useState<string>('');
+  const [isResetting, setIsResetting] = useState<boolean>(false);
 
   // Admin inputs
   const [adminUser, setAdminUser] = useState<string>('UMaT SRID');
@@ -143,7 +151,7 @@ export const AuthScreen: React.FC<{ initialTab?: 'SIGN_IN' | 'SIGN_UP' }> = ({ i
   const detectedNetwork = getNetwork(primaryTab === 'SIGN_IN' ? loginIdentifier : phone);
 
   // Handle Phone / Email Login Submit
-  const handlePhoneEmailLogin = (e: React.FormEvent) => {
+  const handlePhoneEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
     if (!loginIdentifier.trim()) {
@@ -152,13 +160,39 @@ export const AuthScreen: React.FC<{ initialTab?: 'SIGN_IN' | 'SIGN_UP' }> = ({ i
     }
 
     setIsLoggingIn(true);
-    setTimeout(() => {
-      const res = loginWithIdentifier(loginIdentifier.trim(), loginPassword);
+    try {
+      const res = await loginWithIdentifier(loginIdentifier.trim(), loginPassword);
       if (!res.success) {
-        setLoginError(res.message || 'Login failed. Try a demo role or sign up below.');
+        setLoginError(res.message || 'Login failed. Check your password or sign up below.');
       }
+    } catch (err: any) {
+      setLoginError(err?.message || 'Login failed. Please verify credentials.');
+    } finally {
       setIsLoggingIn(false);
-    }, 400);
+    }
+  };
+
+  // Handle Password Reset via Firebase
+  const handleForgotPassword = async () => {
+    setLoginError('');
+    setResetSentMessage('');
+    if (!loginIdentifier.trim() || !loginIdentifier.includes('@')) {
+      setLoginError('Please enter your email address in the field above to receive a password reset link.');
+      return;
+    }
+    setIsResetting(true);
+    try {
+      const res = await sendPasswordReset(loginIdentifier.trim());
+      if (res.success) {
+        setResetSentMessage(`Password reset link sent to ${loginIdentifier.trim()} via Firebase.`);
+      } else {
+        setLoginError(res.message || 'Could not send password reset email.');
+      }
+    } catch (e: any) {
+      setLoginError(e?.message || 'Error sending password reset email.');
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   // Handle Admin Command Login Submit
@@ -207,6 +241,9 @@ export const AuthScreen: React.FC<{ initialTab?: 'SIGN_IN' | 'SIGN_UP' }> = ({ i
       errs.phone = 'Please enter a valid 10-digit Ghana phone number';
     }
     if (!email.trim() || !email.includes('@')) errs.email = 'Valid email address is required';
+    if (regPassword.trim() && regPassword.trim().length < 6) {
+      errs.password = 'Password must be at least 6 characters for Firebase security';
+    }
     if (community === 'Other / Custom Community' && !customCommunity.trim()) {
       errs.community = 'Please specify your location';
     }
@@ -218,17 +255,49 @@ export const AuthScreen: React.FC<{ initialTab?: 'SIGN_IN' | 'SIGN_UP' }> = ({ i
   };
 
   // Handle Registration Submit
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateRegForm()) return;
 
     setIsRegistering(true);
-    setTimeout(async () => {
+    setRegErrors({});
+
+    try {
       const finalLocation = community === 'Other / Custom Community' ? customCommunity : community;
       const finalInstitution = entityType === 'INDIVIDUAL'
         ? (organization.trim() || 'Independent Citizen')
         : (institutionName.trim() || organization.trim() || name.trim());
 
+      // If user specified password, register directly via Firebase Authentication
+      if (regPassword.trim().length >= 6) {
+        const fbRes = await registerWithFirebaseEmail({
+          name: name.trim(),
+          email: email.trim(),
+          password: regPassword.trim(),
+          phone: phone.trim(),
+          role,
+          location: finalLocation,
+          community: finalLocation,
+          entityType,
+          institutionName: finalInstitution
+        });
+
+        if (!fbRes.success) {
+          setRegErrors({ form: fbRes.message || 'Firebase account creation failed.' });
+          setIsRegistering(false);
+          return;
+        }
+
+        if (enrollBiometricsOnRegister && fbRes.user) {
+          try {
+            await registerUserBiometrics(fbRes.user);
+          } catch {}
+        }
+        setIsRegistering(false);
+        return;
+      }
+
+      // Default registration flow
       const newUser = registerUser({
         name: name.trim(),
         phone: phone.trim(),
@@ -254,9 +323,11 @@ export const AuthScreen: React.FC<{ initialTab?: 'SIGN_IN' | 'SIGN_UP' }> = ({ i
           // ignore
         }
       }
-
+    } catch (err: any) {
+      setRegErrors({ form: err?.message || 'Registration failed. Please check your credentials.' });
+    } finally {
       setIsRegistering(false);
-    }, 500);
+    }
   };
 
   return (
@@ -476,7 +547,26 @@ export const AuthScreen: React.FC<{ initialTab?: 'SIGN_IN' | 'SIGN_UP' }> = ({ i
                       placeholder="Enter password or PIN"
                       className="w-full px-4 py-3 rounded-2xl bg-slate-900 border border-slate-700 text-white text-base focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors font-mono placeholder:text-slate-500"
                     />
+                    
+                    <div className="flex items-center justify-between text-xs pt-1">
+                      <span className="text-slate-400">Firebase Auth & Session Encrypted</span>
+                      <button
+                        type="button"
+                        onClick={handleForgotPassword}
+                        disabled={isResetting}
+                        className="text-blue-400 hover:text-blue-300 font-semibold hover:underline cursor-pointer"
+                      >
+                        {isResetting ? 'Sending reset link...' : 'Forgot password?'}
+                      </button>
+                    </div>
                   </div>
+
+                  {resetSentMessage && (
+                    <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-800 text-emerald-300 text-xs flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                      <span>{resetSentMessage}</span>
+                    </div>
+                  )}
 
                   <button
                     type="submit"
@@ -680,6 +770,14 @@ export const AuthScreen: React.FC<{ initialTab?: 'SIGN_IN' | 'SIGN_UP' }> = ({ i
           {primaryTab === 'SIGN_UP' && (
             <form onSubmit={handleRegisterSubmit} className="p-6 sm:p-7 space-y-5 animate-in fade-in duration-200">
               
+              {/* Error Banner */}
+              {regErrors.form && (
+                <div className="p-3.5 rounded-2xl bg-rose-950/60 border border-rose-800 text-rose-200 text-sm flex items-center gap-2 animate-in shake">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                  <span>{regErrors.form}</span>
+                </div>
+              )}
+
               {/* Entity Type Picker */}
               <div>
                 <label className="text-sm font-semibold text-slate-200 block mb-2">
@@ -789,7 +887,7 @@ export const AuthScreen: React.FC<{ initialTab?: 'SIGN_IN' | 'SIGN_UP' }> = ({ i
                 )}
               </div>
 
-              {/* Contact info: Phone & Email */}
+              {/* Contact info: Phone, Email, Password, Ghana Card */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
@@ -825,23 +923,29 @@ export const AuthScreen: React.FC<{ initialTab?: 'SIGN_IN' | 'SIGN_UP' }> = ({ i
                   />
                   {regErrors.email && <p className="text-rose-400 text-xs mt-1.5">{regErrors.email}</p>}
                 </div>
-              </div>
 
-              {/* Location & Drop Point */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="text-sm font-semibold text-slate-200 block mb-1.5">
-                    Community / Operational Zone
-                  </label>
-                  <select
-                    value={community}
-                    onChange={(e) => setCommunity(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl bg-slate-900 border border-slate-700 text-white text-base focus:outline-none focus:border-emerald-500 transition-colors"
-                  >
-                    {GHANA_COMMUNITIES.map(c => (
-                      <option key={c} value={c} className="bg-slate-900 text-white">{c}</option>
-                    ))}
-                  </select>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-sm font-semibold text-slate-200">
+                      Password <span className="text-xs text-emerald-400 font-normal">(Firebase Secure)</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowRegPassword(!showRegPassword)}
+                      className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer font-medium"
+                    >
+                      {showRegPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      <span>{showRegPassword ? 'Hide' : 'Show'}</span>
+                    </button>
+                  </div>
+                  <input
+                    type={showRegPassword ? 'text' : 'password'}
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    placeholder="Min. 6 characters"
+                    className="w-full px-4 py-3 rounded-2xl bg-slate-900 border border-slate-700 text-white text-base focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-500 font-mono"
+                  />
+                  {regErrors.password && <p className="text-rose-400 text-xs mt-1.5">{regErrors.password}</p>}
                 </div>
 
                 <div>
@@ -856,6 +960,22 @@ export const AuthScreen: React.FC<{ initialTab?: 'SIGN_IN' | 'SIGN_UP' }> = ({ i
                     className="w-full px-4 py-3 rounded-2xl bg-slate-900 border border-slate-700 text-white text-base font-mono focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-500"
                   />
                 </div>
+              </div>
+
+              {/* Location & Drop Point */}
+              <div>
+                <label className="text-sm font-semibold text-slate-200 block mb-1.5">
+                  Community / Operational Zone
+                </label>
+                <select
+                  value={community}
+                  onChange={(e) => setCommunity(e.target.value)}
+                  className="w-full px-4 py-3 rounded-2xl bg-slate-900 border border-slate-700 text-white text-base focus:outline-none focus:border-emerald-500 transition-colors"
+                >
+                  {GHANA_COMMUNITIES.map(c => (
+                    <option key={c} value={c} className="bg-slate-900 text-white">{c}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Biometrics & Terms */}

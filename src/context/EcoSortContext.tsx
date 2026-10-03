@@ -108,8 +108,18 @@ import {
 } from '../services/webAuthnService';
 import { localDataCache, EcoSortCachedState, CachedDashboardMetrics } from '../services/localDataCache';
 import { firestoreService } from '../services/firestoreService';
-import { auth, signInWithGoogle, signOutUser } from '../services/firebase';
-import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { 
+  auth, 
+  signInWithGoogle, 
+  signInWithEmail, 
+  signUpWithEmail, 
+  sendResetPassword,
+  signOutUser, 
+  testFirestoreConnection,
+  getFriendlyAuthErrorMessage,
+  onAuthStateChanged,
+  FirebaseUser 
+} from '../services/firebase';
 
 export type AppView = 
   | 'infographic' 
@@ -240,6 +250,19 @@ interface EcoSortContextType {
   firebaseUser: FirebaseUser | null;
   isGoogleAuthLoading: boolean;
   loginWithGoogle: (preferredRole?: UserRole) => Promise<UserProfile | null>;
+  loginWithFirebaseEmail: (email: string, password: string) => Promise<{ success: boolean; message?: string; user?: UserProfile }>;
+  registerWithFirebaseEmail: (params: {
+    email: string;
+    password: string;
+    name: string;
+    phone: string;
+    role: UserRole;
+    location: string;
+    community?: string;
+    entityType?: EntityType;
+    institutionName?: string;
+  }) => Promise<{ success: boolean; message?: string; user?: UserProfile }>;
+  sendPasswordReset: (email: string) => Promise<{ success: boolean; message?: string }>;
   registerUser: (data: {
     name: string;
     phone: string;
@@ -264,7 +287,7 @@ interface EcoSortContextType {
   setAuthInitialTab: (tab: 'SIGN_IN' | 'SIGN_UP') => void;
   loginWithDemoUser: (roleName: UserRole) => void;
   loginAsAdminWithCredentials: (username: string, password: string) => { success: boolean; error?: string };
-  loginWithIdentifier: (identifier: string, passwordOrPin?: string) => { success: boolean; message?: string; user?: UserProfile };
+  loginWithIdentifier: (identifier: string, passwordOrPin?: string) => Promise<{ success: boolean; message?: string; user?: UserProfile }>;
   isAdminAuthenticated: boolean;
   showAdminAuthModal: boolean;
   setShowAdminAuthModal: (show: boolean) => void;
@@ -563,6 +586,35 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
   useEffect(() => {
     refreshSmsLogs();
   }, [refreshSmsLogs]);
+
+  // Synchronize Firebase Authentication state across sessions
+  useEffect(() => {
+    testFirestoreConnection().then(connected => {
+      if (connected) {
+        console.info('[Firebase] Firestore connected and operational.');
+      }
+    });
+
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      setFirebaseUser(fbUser);
+      if (fbUser) {
+        const sessionActive = localStorage.getItem(AUTH_SESSION_KEY) === 'true';
+        if (sessionActive) {
+          try {
+            const cloudProfile = await firestoreService.getUserProfile(fbUser.uid);
+            if (cloudProfile) {
+              setCurrentUser(cloudProfile);
+              setIsRegistered(true);
+            }
+          } catch (e) {
+            console.warn('[Firebase Auth] Error fetching cloud profile on auth state change:', e);
+          }
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // Biometric WebAuthn State
   const [biometricCapability, setBiometricCapability] = useState<BiometricDeviceCapability | null>(null);
@@ -1903,6 +1955,134 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
+  const loginWithFirebaseEmail = async (email: string, pass: string): Promise<{ success: boolean; message?: string; user?: UserProfile }> => {
+    setIsGoogleAuthLoading(true);
+    try {
+      const fbUser = await signInWithEmail(email, pass);
+      setFirebaseUser(fbUser);
+
+      let profile = await firestoreService.getUserProfile(fbUser.uid);
+      if (!profile && fbUser.email) {
+        profile = await firestoreService.getUserProfileByEmail(fbUser.email);
+      }
+
+      if (profile) {
+        setCurrentUser(profile);
+        setIsRegistered(true);
+        setShowAuthModal(false);
+        try {
+          localStorage.setItem(AUTH_SESSION_KEY, 'true');
+          sessionStorage.setItem('ecosort_session_active', 'true');
+        } catch {}
+
+        switch (profile.role) {
+          case 'COLLECTION_AGENT': setCurrentView('collector-app'); break;
+          case 'RECYCLER': setCurrentView('recycler'); break;
+          case 'ADMIN': setCurrentView('admin'); break;
+          default: setCurrentView('user-dashboard'); break;
+        }
+
+        soundEffects.playRewardChime();
+        addToast({
+          title: `Welcome back, ${profile.name}! 🌿`,
+          message: `Signed in as ${profile.role.replace('_', ' ')}. Verified with Firebase.`,
+          type: 'success',
+          syncState: 'synced',
+          duration: 3500
+        });
+
+        return { success: true, user: profile };
+      } else {
+        const detectedName = fbUser.displayName || email.split('@')[0];
+        const newProf = registerUser({
+          name: detectedName,
+          email: fbUser.email || email,
+          phone: fbUser.phoneNumber || '+233 24 892 4110',
+          role: 'USER',
+          location: 'Accra Metropolitan',
+          community: 'University of Ghana (Legon Campus)',
+        });
+        const userWithUid: UserProfile = { ...newProf, id: fbUser.uid, authProvider: 'email' };
+        setCurrentUser(userWithUid);
+        await firestoreService.saveUserProfile(userWithUid);
+        return { success: true, user: userWithUid };
+      }
+    } catch (error: any) {
+      const friendlyMessage = getFriendlyAuthErrorMessage(error);
+      return { success: false, message: friendlyMessage };
+    } finally {
+      setIsGoogleAuthLoading(false);
+    }
+  };
+
+  const registerWithFirebaseEmail = async (params: {
+    email: string;
+    password: string;
+    name: string;
+    phone: string;
+    role: UserRole;
+    location: string;
+    community?: string;
+    entityType?: EntityType;
+    institutionName?: string;
+  }): Promise<{ success: boolean; message?: string; user?: UserProfile }> => {
+    setIsGoogleAuthLoading(true);
+    try {
+      const fbUser = await signUpWithEmail(params.email, params.password, params.name);
+      setFirebaseUser(fbUser);
+
+      const newUser = registerUser({
+        name: params.name,
+        email: params.email,
+        phone: params.phone,
+        role: params.role,
+        location: params.location,
+        community: params.community,
+        entityType: params.entityType,
+        institutionName: params.institutionName,
+      });
+
+      const userWithUid: UserProfile = {
+        ...newUser,
+        id: fbUser.uid,
+        authProvider: 'email'
+      };
+      setCurrentUser(userWithUid);
+      setAllUsers(prev => [userWithUid, ...prev.filter(u => u.id !== userWithUid.id && u.id !== newUser.id)]);
+      await firestoreService.saveUserProfile(userWithUid);
+      saveState({ currentUser: userWithUid });
+
+      return { success: true, user: userWithUid };
+    } catch (error: any) {
+      const friendlyMessage = getFriendlyAuthErrorMessage(error);
+      addToast({
+        title: 'Account Creation Failed',
+        message: friendlyMessage,
+        type: 'error',
+        duration: 5000
+      });
+      return { success: false, message: friendlyMessage };
+    } finally {
+      setIsGoogleAuthLoading(false);
+    }
+  };
+
+  const sendPasswordReset = async (email: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      await sendResetPassword(email);
+      addToast({
+        title: 'Password Reset Sent 📧',
+        message: `A password reset link was sent to ${email}.`,
+        type: 'info',
+        duration: 5000
+      });
+      return { success: true };
+    } catch (error: any) {
+      const friendly = getFriendlyAuthErrorMessage(error);
+      return { success: false, message: friendly };
+    }
+  };
+
   const logoutUser = async (targetTab: 'SIGN_IN' | 'SIGN_UP' = 'SIGN_IN') => {
     try {
       await signOutUser();
@@ -2008,7 +2188,7 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
     };
   };
 
-  const loginWithIdentifier = (identifier: string, passwordOrPin?: string): { success: boolean; message?: string; user?: UserProfile } => {
+  const loginWithIdentifier = async (identifier: string, passwordOrPin?: string): Promise<{ success: boolean; message?: string; user?: UserProfile }> => {
     const cleanId = (identifier || '').trim().toLowerCase();
     const cleanDigits = cleanId.replace(/\D/g, '');
 
@@ -2033,6 +2213,25 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
         duration: 3500
       });
       return { success: true, user: DEMO_ADMIN };
+    }
+
+    // If identifier is an email and password is provided, attempt Firebase Auth email login
+    if (cleanId.includes('@')) {
+      if (!passwordOrPin) {
+        return { success: false, message: 'Please enter your password to sign in.' };
+      }
+      if (passwordOrPin.length < 6) {
+        return { success: false, message: 'Password must be at least 6 characters for Firebase security.' };
+      }
+      const fbRes = await loginWithFirebaseEmail(cleanId, passwordOrPin);
+      if (fbRes.success) {
+        return fbRes;
+      }
+      // Check if it matches a demo account before failing
+      const isDemoAccount = ['bright@ecosort.gh', 'ama@ecosort.gh', 'kwame@ecosort.gh', 'srid@umat.edu.gh'].includes(cleanId);
+      if (!isDemoAccount) {
+        return { success: false, message: fbRes.message || 'Invalid email or password. Please verify credentials or create an account.' };
+      }
     }
 
     // Check all users by email or phone
@@ -2073,16 +2272,13 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
       return { success: true, user: foundUser };
     }
 
-    // If identifier has 9+ digits or has an @ sign, allow smooth entry as active citizen!
-    if (cleanDigits.length >= 9 || cleanId.includes('@')) {
-      const detectedName = cleanId.includes('@')
-        ? cleanId.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-        : `Eco Citizen (${cleanDigits.slice(-4)})`;
-
+    // If identifier has 9+ digits, allow phone entry
+    if (cleanDigits.length >= 9) {
+      const detectedName = `Eco Citizen (${cleanDigits.slice(-4)})`;
       const newUser = registerUser({
         name: detectedName,
-        phone: cleanDigits.length >= 9 ? identifier : '+233 24 892 4110',
-        email: cleanId.includes('@') ? cleanId : `${cleanDigits}@ecosort.gh`,
+        phone: identifier,
+        email: `${cleanDigits}@ecosort.gh`,
         location: 'University of Ghana (Legon Campus)',
         community: 'University of Ghana (Legon Campus)',
         address: 'Legon Direct Drop Point',
@@ -2100,7 +2296,7 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     return { 
       success: false, 
-      message: 'Account not found. Please enter your Ghana phone number or email, or switch to "Create Account".' 
+      message: 'Account not found. Please verify your credentials or switch to "Create Account".' 
     };
   };
 
@@ -4723,6 +4919,9 @@ export const EcoSortProvider: React.FC<{ children: ReactNode }> = ({ children })
         firebaseUser,
         isGoogleAuthLoading,
         loginWithGoogle,
+        loginWithFirebaseEmail,
+        registerWithFirebaseEmail,
+        sendPasswordReset,
         registerUser,
         updateUserProfile,
         logoutUser,
